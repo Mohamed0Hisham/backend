@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 
 const userSchema = mongoose.Schema(
 	{
@@ -48,8 +48,8 @@ const userSchema = mongoose.Schema(
 		role: {
 			type: String,
 			required: [true, "Role is required"],
-			enum: ["admin", "user", "patient", "doctor", "nurse", "hospital"],
-			default:"user"
+			enum: ["Admin", "User", "Patient", "Doctor", "Nurse", "Hospital"],
+			default: "user",
 		},
 		specialization: {
 			type: String,
