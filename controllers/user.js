@@ -97,10 +97,10 @@ export const index = async (req, res, next) => {
 
 export const show = async (req, res, next) => {
 	try {
-		const id = req.params.id;
+		const id = req.user._id;
 		const user = await userModel.findById(id);
 		if (!user) {
-			return next(errorHandler(404, "Cannot find this user "));
+			return next(errorHandler(404, "Cannot find this user  "));
 		}
 		return res.status(200).json({
 			data: user,
