@@ -19,7 +19,7 @@ export const store = async (req, res) => {
 		const doctor = await user.findById(doctorId);
 		const role = req.user.role;
 
-		if (role !== "admin" && role !== "hospital") {
+		if (role !== "Admin" && role !== "Hospital") {
 			const { nurseId, priority, appointmentDate } = req.body;
 			const appoint = new Appointment({
 				patientId,
@@ -74,7 +74,7 @@ export const store = async (req, res) => {
 export const deleteAppointUser = async (req, res) => {
 	const role = req.user.role;
 	const userId = req.user._id;
-	if (role == "admin" || role == "patient") {
+	if (role == "Admin" || role == "Patient") {
 		const session = await startSession();
 		try {
 			session.startTransaction();
@@ -119,7 +119,7 @@ export const deleteAppointDoctor = async (req, res) => {
 	const role = req.user.role;
 	const doctorId = req.user._id;
 
-	if (role === "admin" || role === "nurse" || role === "doctor") {
+	if (role === "Admin" || role === "Nurse" || role === "Doctor") {
 		const session = await startSession();
 		try {
 			session.startTransaction();
@@ -214,7 +214,7 @@ export const update = async (req, res) => {
 	const role = req.user.role;
 	const userId = req.user._id;
 
-	if (role === "patient") {
+	if (role === "Patient") {
 		const session = await startSession();
 		try {
 			session.startTransaction();
@@ -289,7 +289,7 @@ export const update = async (req, res) => {
 export const index = async (req, res, next) => {
 	const role = req.user.role;
 	const userId = req.user._id;
-	if (role === "admin") {
+	if (role === "Admin") {
 		try {
 			const page = parseInt(req.query.page) || 1;
 			const limit = 10;
@@ -317,13 +317,13 @@ export const index = async (req, res, next) => {
 			);
 		}
 	}
-	if (role === "nurse" || role === "doctor") {
+	if (role === "Nurse" || role === "Doctor") {
 		try {
 			// Filter based on user role
 			let filter = {};
-			if (role === "doctor") {
+			if (role === "Doctor") {
 				filter = { doctorId: userId };
-			} else if (role === "nurse") {
+			} else if (role === "Nurse") {
 				filter = { nurseId: userId };
 			}
 
