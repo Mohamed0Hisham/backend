@@ -2,11 +2,14 @@ import express from "express";
 import {
 	callbackFromFacebook,
 	callbackFromGoogle,
+	confirmEmail,
 	redirectToFacebook,
 	redirectToGoogle,
 } from "../controllers/oauth.controller.js";
 
 const router = express.Router();
+
+router.get("/email/confirm", confirmEmail)
 
 router.get("/google", redirectToGoogle);
 

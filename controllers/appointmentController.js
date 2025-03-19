@@ -1,9 +1,9 @@
 import user from "../models/userModel.js";
 import Appointment from "../models/appointmentModel.js";
-import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 import { startSession } from "mongoose";
 import { errorHandler } from "../helpers/errorHandler.js";
+import emailService from "../Mail/emailService.js";
 
 dotenv.config();
 
@@ -83,7 +83,9 @@ export const deleteAppointUser = async (req, res) => {
 			if (!appointment) {
 				await session.abortTransaction();
 				await session.endSession();
-				return res.status(404).json({ message: "Appointment not found" });
+				return res
+					.status(404)
+					.json({ message: "Appointment not found" });
 			}
 
 			await Appointment.findByIdAndDelete(req.params.id).session(session);
@@ -123,14 +125,16 @@ export const deleteAppointDoctor = async (req, res) => {
 		const session = await startSession();
 		try {
 			session.startTransaction();
-			const appointment = await Appointment.findById(req.params.id).session(
-				session
-			);
+			const appointment = await Appointment.findById(
+				req.params.id
+			).session(session);
 			if (!appointment) {
 				await session.abortTransaction();
 				await session.endSession();
 
-				return res.status(404).json({ message: "Appointment not found" });
+				return res
+					.status(404)
+					.json({ message: "Appointment not found" });
 			}
 
 			// Delete the appointment
@@ -151,7 +155,10 @@ export const deleteAppointDoctor = async (req, res) => {
 				appointment.patientId,
 				{
 					$push: {
-						appoints: { appointmentId: appointment._id, status: "deleted" },
+						appoints: {
+							appointmentId: appointment._id,
+							status: "deleted",
+						},
 					},
 				},
 				{ session }
@@ -169,27 +176,10 @@ export const deleteAppointDoctor = async (req, res) => {
 
 			const patient = await user.findById(appointment.patientId);
 
-			const transporter = nodemailer.createTransport({
-				service: "gmail",
-				host: "smtp.gmail.com",
-				port: 587,
-				secure: false,
-				auth: {
-					user: process.env.MAIL_USER,
-					pass: process.env.MAIL_PASSWORD,
-				},
-			});
-			const mailOption = {
-				from: process.env.MAIL_USER,
-				to: patient.email,
-				subject: "Appointment Deletion Notification",
-				html: `<div>
-                            <h3>Your appointment has been deleted</h3>
-                            <p>We regret to inform you that your appointment scheduled for ${appointment.appointmentDate} has been deleted.</p>
-                            <p>If you have any questions, please contact us.</p>
-                        </div>`,
-			};
-			await transporter.sendMail(mailOption);
+			await emailService.sendAppointmentDeletion(
+				patient.email,
+				appointment.appointmentDate
+			);
 
 			await session.commitTransaction();
 			res.json({ message: "Appointment deleted successfully", data: [] });
@@ -219,11 +209,13 @@ export const update = async (req, res) => {
 		try {
 			session.startTransaction();
 			const appointmentId = req.params.id;
-			const oldAppoint = await Appointment.findById(appointmentId).session(
-				session
-			);
+			const oldAppoint = await Appointment.findById(
+				appointmentId
+			).session(session);
 			if (!oldAppoint) {
-				return res.status(404).json({ message: "Appointment not found" });
+				return res
+					.status(404)
+					.json({ message: "Appointment not found" });
 			}
 
 			const doctorId = oldAppoint?.doctorId;
@@ -343,7 +335,9 @@ export const index = async (req, res, next) => {
 
 			// Check if no appointments found
 			if (appointments.length === 0) {
-				return res.status(404).json({ message: "No appointments found" });
+				return res
+					.status(404)
+					.json({ message: "No appointments found" });
 			}
 
 			res.json({
@@ -372,8 +366,9 @@ export const show = async (req, res, next) => {
 			data: booking,
 		});
 	} catch (error) {
-		res
-			.status(400)
-			.json({ success: false, message: "failed to show this appointment" });
+		res.status(400).json({
+			success: false,
+			message: "failed to show this appointment",
+		});
 	}
 };

@@ -2,6 +2,10 @@ import User from "../models/userModel.js";
 import { errorHandler } from "../helpers/errorHandler.js";
 import { generateToken } from "../middlewares/auth.js";
 import axios from "axios";
+import jwt from "jsonwebtoken";
+import { isTokenInBlacklist } from "./blacklist.js";
+import { invalid } from "../Mail/templates/invalidConfirmation.template.js";
+import { confirmed } from "../Mail/templates/confirmed.template.js";
 
 export const redirectToGoogle = (req, res) => {
 	const redirectUri = `${process.env.BASE_URL}/auth/google/callback`;
@@ -81,5 +85,28 @@ export const callbackFromFacebook = async (req, res, next) => {
 			error.response?.data || error.message
 		);
 		return next(errorHandler(500, error.message));
+	}
+};
+
+export const confirmEmail = async (req, res, next) => {
+	try {
+		const { email, token } = req.query;
+
+		const decoded = jwt.verify(token, process.env.JWT_SECRET);
+		console.log(decoded);
+
+		if (decoded.email !== email) {
+			throw new Error()
+		}
+
+		if (isTokenInBlacklist(token)) {
+			throw new Error()
+		}
+
+		await User.findOneAndUpdate({ email }, { isVerified: true });
+
+		return res.status(200).send(confirmed());
+	} catch (error) {
+		return res.status(400).send(invalid());
 	}
 };

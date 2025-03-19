@@ -1,5 +1,7 @@
 import mailerInstance from "./transporter.js";
 import { otpTemplate } from "./templates/OTP.template.js";
+import { AppointDelteTemplate } from "./templates/AppointDelete.template.js";
+import { confirmationTemplate } from "./templates/confirmation.template.js";
 
 class EmailService {
 	constructor() {
@@ -14,15 +16,41 @@ class EmailService {
 			throw new Error("Failed to send email: " + error.message);
 		}
 	}
-	async sendOTPEmail(userEmail, userName, otp) {
+	async confirmEmail(email, token) {
 		const mailOptions = {
 			from: {
 				name: "noreply",
 				address: process.env.MAIL_USER,
 			},
-			to: userEmail,
+			to: email,
+			subject: "Confirm Your Sign-Up",
+			html: confirmationTemplate(email, token),
+		};
+
+		await this._sendEmail(mailOptions);
+	}
+	async sendOTPEmail(email, name, otp) {
+		const mailOptions = {
+			from: {
+				name: "noreply",
+				address: process.env.MAIL_USER,
+			},
+			to: email,
 			subject: "Your OTP for Verification",
-			html: otpTemplate(userName, otp),
+			html: otpTemplate(name, otp),
+		};
+
+		await this._sendEmail(mailOptions);
+	}
+	async sendAppointmentDeletion(email, date) {
+		const mailOptions = {
+			from: {
+				name: "noreply",
+				address: process.env.MAIL_USER,
+			},
+			to: email,
+			subject: "Appointment Deletion Notification",
+			html: AppointDelteTemplate(date),
 		};
 
 		await this._sendEmail(mailOptions);
