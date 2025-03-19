@@ -12,6 +12,11 @@ const adviceSchema = mongoose.Schema(
 			ref: "DiseasesCategory",
 			required: [true, "Diseases Category ID is required"],
 		},
+		title: {
+			type: String,
+			required: [true, "This Advice MUST have a title "],
+			maxLength: [200, "Advice's title MUST NOT exceed 200 characters"],
+		},
 		description: {
 			type: String,
 			required: [true, "This Advice MUST have a description"],
