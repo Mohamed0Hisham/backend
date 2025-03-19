@@ -2,6 +2,8 @@ import User from "../models/userModel.js";
 import { errorHandler } from "../helpers/errorHandler.js";
 import { generateToken } from "../middlewares/auth.js";
 import axios from "axios";
+import jwt from "jsonwebtoken";
+import { isTokenInBlacklist } from "./blacklist.js";
 
 export const redirectToGoogle = (req, res) => {
 	const redirectUri = `${process.env.BASE_URL}/auth/google/callback`;
@@ -84,6 +86,33 @@ export const callbackFromFacebook = async (req, res, next) => {
 	}
 };
 
-export const confirmEmail = async (req,res) => {
-	
-}
+export const confirmEmail = async (req, res, next) => {
+	try {
+		const { email, token } = req.query;
+
+		const decoded = jwt.verify(token, process.env.JWT_SECRET);
+		console.log(decoded);
+
+		if (decoded.email !== email) {
+			return next(errorHandler(401, "unauthorized process"));
+		}
+
+		if (isTokenInBlacklist(token)) {
+			return res
+				.status(401)
+				.json({
+					success: false,
+					message: "Token is invalid, please log in again",
+				});
+		}
+
+		await User.findOneAndUpdate({ email }, { isVerified: true });
+
+		return res.status(200).json({
+			success: true,
+			message: "Verification completed successfully",
+		});
+	} catch (error) {
+		return next(errorHandler(500, error.message));
+	}
+};

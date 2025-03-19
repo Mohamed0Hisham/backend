@@ -2,6 +2,7 @@ import express from "express";
 import {
 	callbackFromFacebook,
 	callbackFromGoogle,
+	confirmEmail,
 	redirectToFacebook,
 	redirectToGoogle,
 } from "../controllers/oauth.controller.js";
