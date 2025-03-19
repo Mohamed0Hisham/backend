@@ -1,5 +1,5 @@
-export const invalid = () =>
-	`
+export const invalid = () => {
+	return `
             <!DOCTYPE html>
             <html lang="en">
             <head>
@@ -41,5 +41,6 @@ export const invalid = () =>
                     <p>The confirmation link is invalid or has expired. Please request a new confirmation email.</p>
                 </div>
             </body>
-            </html>
+            </html>;
         `;
+};

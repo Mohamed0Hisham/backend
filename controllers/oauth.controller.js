@@ -105,8 +105,8 @@ export const confirmEmail = async (req, res, next) => {
 
 		await User.findOneAndUpdate({ email }, { isVerified: true });
 
-		return res.status(200).send(confirmed);
+		return res.status(200).send(confirmed());
 	} catch (error) {
-		return res.status(400).send(invalid);
+		return res.status(400).send(invalid());
 	}
 };

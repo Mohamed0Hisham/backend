@@ -3,31 +3,38 @@ import userModel from "../models/userModel.js";
 import jwt from "jsonwebtoken";
 import { addToBlacklist } from "./blacklist.js";
 import { errorHandler } from "../helpers/errorHandler.js";
+import emailService from "../Mail/emailService.js";
 
 export const register = async (req, res) => {
 	try {
-		const existingUser = await userModel.findOne({ email: req.body.email });
+		const { email } = req.body;
+		const existingUser = await userModel.findOne({ email});
 		if (existingUser) {
-			return res.status(409).json({ message: "This email already exists" });
+			return res
+				.status(409)
+				.json({ message: "This email already exists" });
 		}
 
 		const newUser = new userModel(req.body);
 		const hashedPassword = await bcrypt.hash(req.body.password, 10);
 		newUser.password = hashedPassword;
 
-		await newUser.save();
-		
-		const token = jwt.sign({ email }, process.env.JWT_SECRET, {
-			expiresIn: "24h",
-		});
+		const token = jwt.sign(
+			{ email: email },
+			process.env.JWT_SECRET,
+			{
+				expiresIn: "24h",
+			}
+		);
 
 		await emailService.confirmEmail(email, token);
+		await newUser.save();
 
 		res.status(201).json({ message: "confirmation email has been sent" });
 	} catch (error) {
 		console.error(error); // Log the error for debugging
 		res.status(500).json({
-			message: "An error occurred while registering the user "+error,
+			message: "An error occurred while registering the user " + error,
 		});
 	}
 };
@@ -36,16 +43,22 @@ export const login = async (req, res) => {
 	try {
 		const user = await userModel.findOne({ email: req.body.email });
 		if (!user) {
-			return res.status(401).json({ message: "Invalid email or password" });
+			return res
+				.status(401)
+				.json({ message: "Invalid email or password" });
 		}
-		
+
 		if (!user.isVerified) {
-			return res.status(401).json({ message: "unconfirmed email, check your email" });
+			return res
+				.status(401)
+				.json({ message: "unconfirmed email, check your email" });
 		}
 
 		const passwordCheck = await user.comparePassword(req.body.password);
 		if (!passwordCheck) {
-			return res.status(401).json({ message: "Invalid email or password" });
+			return res
+				.status(401)
+				.json({ message: "Invalid email or password" });
 		}
 
 		jwt.sign(
@@ -55,12 +68,16 @@ export const login = async (req, res) => {
 			(error, token) => {
 				if (error) {
 					console.error("Error signing token:", error);
-					return res.status(500).json({ message: "Internal server error" });
+					return res
+						.status(500)
+						.json({ message: "Internal server error" });
 				}
 
-				res.header("token", token, { httpOnly: true }).status(200).json({
-					token,
-				});
+				res.header("token", token, { httpOnly: true })
+					.status(200)
+					.json({
+						token,
+					});
 			}
 		);
 	} catch (error) {
@@ -148,5 +165,3 @@ export const update = async (req, res, next) => {
 		);
 	}
 };
-
-
