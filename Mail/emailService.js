@@ -1,5 +1,6 @@
 import mailerInstance from "./transporter.js";
 import { otpTemplate } from "./templates/OTP.template.js";
+import { AppointDelteTemplate } from "./templates/AppointDelete.template.js";
 
 class EmailService {
 	constructor() {
@@ -23,6 +24,19 @@ class EmailService {
 			to: userEmail,
 			subject: "Your OTP for Verification",
 			html: otpTemplate(userName, otp),
+		};
+
+		await this._sendEmail(mailOptions);
+	}
+	async sendAppointmentDeletion(email,date){
+		const mailOptions = {
+			from: {
+				name: "noreply",
+				address: process.env.MAIL_USER,
+			},
+			to: email,
+			subject: "Appointment Deletion Notification",
+			html: AppointDelteTemplate(date),
 		};
 
 		await this._sendEmail(mailOptions);
