@@ -47,19 +47,19 @@ app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
 //APIs goes here
 
-app.use("/api/user", userRouter);
+app.use("/api/users", userRouter);
 
-app.use("/api/advice", adviceRouter);
-app.use("/api/appointment", appointmentRouter);
-app.use("/api/diseasescategory", diseasesCategoryRouter);
-app.use("/api/diseases", diseasesRouter);
-app.use("/api/treatment", treatmentRouter);
+app.use("/api/advices", adviceRouter);
+app.use("/api/appointments", appointmentRouter);
+app.use("/api/diseasescategories", diseasesCategoryRouter);
+app.use("/api/diseaseses", diseasesRouter);
+app.use("/api/treatments", treatmentRouter);
 
 app.use("/api/otp", otpRouter);
-app.use("/advice", adviceRouter);
-app.use("/diseasescategory", diseasesCategoryRouter);
-app.use("/diseases", diseasesRouter);
-app.use("/treatment", treatmentRouter);
+// app.use("/advice", adviceRouter);
+// app.use("/diseasescategory", diseasesCategoryRouter);
+// app.use("/diseases", diseasesRouter);
+// app.use("/treatment", treatmentRouter);
 app.use("/auth", oauthRouter);
 // app.post("/test", async (req, res) => {
 // 	const { doctorId, patientId, nurseId, priority, appointmentDate, status } =
