@@ -1,4 +1,5 @@
 import ADVICE from "../models/advice.model.js";
+import DiseasesCategory from "../models/diseasesCategory.model.js";
 import { errorHandler } from "../helpers/errorHandler.js";
 
 export const index = async (req, res, next) => {
@@ -7,8 +8,25 @@ export const index = async (req, res, next) => {
 		if (adviceList.length === 0) {
 			return next(errorHandler(200, "Advice list is empty"));
 		}
+		const diseasesCategoryIDs = adviceList.map(
+			(item) => item.diseasesCategoryId
+		);
+		console.log(diseasesCategoryIDs);
+		const diseasesCategories = await DiseasesCategory.find({
+			_id: { $in: diseasesCategoryIDs },
+		});
+
+		const diseasesCategoryMap = diseasesCategories.reduce((acc, category) => {
+			acc[category._id.toString()] = category.name;
+			return acc;
+		}, {});
+		const advice = adviceList.map(({ diseasesCategoryId, ...item }) => ({
+			...item,
+			diseasesCategoryName:
+				diseasesCategoryMap[diseasesCategoryId.toString()] || "unknown",
+		}));
 		return res.status(200).json({
-			data: adviceList,
+			data: advice,
 			message: "advices fetched successfully",
 			success: true,
 		});
@@ -18,17 +36,27 @@ export const index = async (req, res, next) => {
 };
 
 export const store = async (req, res, next) => {
-	const { doctorId, diseasesCategoryId, description } = req.body;
-	if (doctorId == null || diseasesCategoryId == null || description == null) {
+	const doctorId = req.user._id;
+	const { diseasesCategoryId, title, description } = req.body;
+	if (
+		doctorId === null ||
+		diseasesCategoryId === null ||
+		description === null ||
+		title === null
+	) {
 		return next(errorHandler(400, "Please provide all required fields"));
 	}
 	if (description.length > 400) {
+		return next(errorHandler(422, "Description is too long"));
+	}
+	if (title.length > 400) {
 		return next(errorHandler(422, "Description is too long"));
 	}
 	try {
 		const newAdvice = await new ADVICE({
 			doctorId,
 			diseasesCategoryId,
+			title,
 			description,
 		});
 		const result = await newAdvice.save();
@@ -57,7 +85,9 @@ export const update = async (req, res, next) => {
 			success: true,
 		});
 	} catch (error) {
-		return next(errorHandler(500, "Error while updating the advice:" + error.message));
+		return next(
+			errorHandler(500, "Error while updating the advice:" + error.message)
+		);
 	}
 };
 
@@ -73,6 +103,8 @@ export const destroy = async (req, res, next) => {
 			message: "deleted successfully",
 		});
 	} catch (error) {
-		return next(errorHandler(500, "Error while deleting the advice:" + error.message));
+		return next(
+			errorHandler(500, "Error while deleting the advice:" + error.message)
+		);
 	}
 };
