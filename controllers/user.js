@@ -1,22 +1,21 @@
 import bcrypt from "bcrypt";
-import userModel from "../models/userModel.js"; // Ensure the path and extension are correct
+import userModel from "../models/userModel.js";
 import jwt from "jsonwebtoken";
 import { addToBlacklist } from "./blacklist.js";
 import { errorHandler } from "../helpers/errorHandler.js";
 
 export const register = async (req, res) => {
 	try {
-		const existingUser = await userModel.findOne({ email: req.body.email }); // Ensure you use req.body.email
+		const existingUser = await userModel.findOne({ email: req.body.email });
 		if (existingUser) {
-			return res.status(409).json({ message: "This email already exists" }); // there is a conflict in existing data
+			return res.status(409).json({ message: "This email already exists" });
 		}
 
 		const newUser = new userModel(req.body);
 		const hashedPassword = await bcrypt.hash(req.body.password, 10);
 		newUser.password = hashedPassword;
 
-		// Save the user and wait for the result
-		const user = await newUser.save(); // Make sure to await the save operation
+		await newUser.save();
 		
 		const token = jwt.sign({ email }, process.env.JWT_SECRET, {
 			expiresIn: "24h",
@@ -24,7 +23,7 @@ export const register = async (req, res) => {
 
 		await emailService.confirmEmail(email, token);
 
-		res.status(201).json({ message: "User  added successfully", user });
+		res.status(201).json({ message: "confirmation email has been sent" });
 	} catch (error) {
 		console.error(error); // Log the error for debugging
 		res.status(500).json({
@@ -37,7 +36,11 @@ export const login = async (req, res) => {
 	try {
 		const user = await userModel.findOne({ email: req.body.email });
 		if (!user) {
-			return res.status(401).json({ message: "Invalid email or password" }); // unauthorized not bad request
+			return res.status(401).json({ message: "Invalid email or password" });
+		}
+		
+		if (!user.isVerified) {
+			return res.status(401).json({ message: "unconfirmed email, check your email" });
 		}
 
 		const passwordCheck = await user.comparePassword(req.body.password);
