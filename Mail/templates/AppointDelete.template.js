@@ -76,11 +76,11 @@ export const AppointDelteTemplate = (date) => ` <!DOCTYPE html>
             <p>We regret to inform you that your appointment scheduled for <strong>${date}</strong> has been deleted.</p>
             <p>If you have any questions or need further assistance, please feel free to contact us.</p>
             <div class="contact-info">
-                <p>Contact us at: <a href="mailto:support@yourcompany.com">support@yourcompany.com</a></p>
+                <p>Contact us at: <a href="mailto:medease@healthylife.com">medease@healthylife.com</a></p>
             </div>
         </div>
         <div class="footer">
-            <p>&copy; ${new Date().getFullYear()} Your Company Name. All rights reserved.</p>
+            <p>&copy; ${new Date().getFullYear()} MedEase. All rights reserved.</p>
         </div>
     </div>
 </body>

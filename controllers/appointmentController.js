@@ -1,6 +1,5 @@
 import user from "../models/userModel.js";
 import Appointment from "../models/appointmentModel.js";
-import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 import { startSession } from "mongoose";
 import { errorHandler } from "../helpers/errorHandler.js";
