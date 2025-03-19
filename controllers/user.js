@@ -22,7 +22,7 @@ export const register = async (req, res) => {
 	} catch (error) {
 		console.error(error); // Log the error for debugging
 		res.status(500).json({
-			message: "An error occurred while registering the user",
+			message: "An error occurred while registering the user "+error,
 		});
 	}
 };
@@ -97,10 +97,10 @@ export const index = async (req, res, next) => {
 
 export const show = async (req, res, next) => {
 	try {
-		const id = req.params.id;
+		const id = req.user._id;
 		const user = await userModel.findById(id);
 		if (!user) {
-			return next(errorHandler(404, "Cannot find this user "));
+			return next(errorHandler(404, "Cannot find this user  "));
 		}
 		return res.status(200).json({
 			data: user,
@@ -112,6 +112,28 @@ export const show = async (req, res, next) => {
 			errorHandler(
 				500,
 				"There is an error occured when retrived this user data,Please try again later " +
+					error
+			)
+		);
+	}
+};
+
+export const update = async (req, res, next) => {
+	const id = req.user._id;
+	try {
+		const user = await userModel.findOneAndUpdate({ _id: id }, req.body, {
+			new: true,
+		});
+		return res.status(200).json({
+			message: "User data has been updated",
+			success: true,
+			data: user,
+		});
+	} catch (error) {
+		return next(
+			errorHandler(
+				500,
+				"An error occurred while updating the Disease. Please try again later." +
 					error
 			)
 		);

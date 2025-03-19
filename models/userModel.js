@@ -11,7 +11,7 @@ const userSchema = mongoose.Schema(
 		gender: {
 			type: String,
 			required: [true, "Gender is required"],
-			enum: ["male", "female", "else"],
+			enum: ["Male", "Female"],
 		},
 		email: {
 			type: String,
@@ -54,9 +54,7 @@ const userSchema = mongoose.Schema(
 			type: String,
 			maxLength: [40, "Specialization MUST NOT exceed 40 characters"],
 		},
-		appoints: [
-			
-		],
+		appoints: [],
 		otp: { type: String },
 		otpExpiry: { type: Date },
 		isVerified: { type: Boolean, default: false },

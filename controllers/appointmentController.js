@@ -286,10 +286,37 @@ export const update = async (req, res) => {
 	}
 };
 
-export const index = async (req, res) => {
+export const index = async (req, res, next) => {
 	const role = req.user.role;
 	const userId = req.user._id;
-
+	if (role === "admin") {
+		try {
+			const page = parseInt(req.query.page) || 1;
+			const limit = 10;
+			const skip = (page - 1) * limit;
+			const appointments = await Appointment.find()
+				.sort({
+					appointmentDate: 1,
+				})
+				.skip(skip)
+				.limit(limit);
+			if (appointments.length === 0) {
+				return next(errorHandler(404, "There are no appointments"));
+			}
+			return res.status(200).json({
+				message: "Appointments retrieved successfully",
+				data: appointments,
+			});
+		} catch (error) {
+			return next(
+				errorHandler(
+					500,
+					"An error occurred while retrieving the Appointments. Please try again later." +
+						error
+				)
+			);
+		}
+	}
 	if (role === "nurse" || role === "doctor") {
 		try {
 			// Filter based on user role
