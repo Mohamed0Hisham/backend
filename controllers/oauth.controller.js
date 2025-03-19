@@ -83,3 +83,7 @@ export const callbackFromFacebook = async (req, res, next) => {
 		return next(errorHandler(500, error.message));
 	}
 };
+
+export const confirmEmail = async (req,res) => {
+	
+}

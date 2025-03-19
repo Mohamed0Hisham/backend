@@ -8,6 +8,8 @@ import {
 
 const router = express.Router();
 
+router.post("/email/confirm", confirmEmail)
+
 router.get("/google", redirectToGoogle);
 
 router.get("/google/callback", callbackFromGoogle);
