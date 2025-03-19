@@ -4,6 +4,8 @@ import { generateToken } from "../middlewares/auth.js";
 import axios from "axios";
 import jwt from "jsonwebtoken";
 import { isTokenInBlacklist } from "./blacklist.js";
+import { invalid } from "../Mail/templates/invalidConfirmation.template.js";
+import { confirmed } from "../Mail/templates/confirmed.template.js";
 
 export const redirectToGoogle = (req, res) => {
 	const redirectUri = `${process.env.BASE_URL}/auth/google/callback`;
@@ -94,25 +96,17 @@ export const confirmEmail = async (req, res, next) => {
 		console.log(decoded);
 
 		if (decoded.email !== email) {
-			return next(errorHandler(401, "unauthorized process"));
+			throw new Error()
 		}
 
 		if (isTokenInBlacklist(token)) {
-			return res
-				.status(401)
-				.json({
-					success: false,
-					message: "Token is invalid, please log in again",
-				});
+			throw new Error()
 		}
 
 		await User.findOneAndUpdate({ email }, { isVerified: true });
 
-		return res.status(200).json({
-			success: true,
-			message: "Verification completed successfully",
-		});
+		return res.status(200).send(confirmed);
 	} catch (error) {
-		return next(errorHandler(500, error.message));
+		return res.status(400).send(invalid);
 	}
 };

@@ -9,7 +9,7 @@ import {
 
 const router = express.Router();
 
-router.post("/email/confirm", confirmEmail)
+router.get("/email/confirm", confirmEmail)
 
 router.get("/google", redirectToGoogle);
 
