@@ -1,4 +1,4 @@
-export const confirmationTemplate = (email, magicToken)=>`<!DOCTYPE html>
+export const confirmationTemplate = (email, magicToken) => `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">

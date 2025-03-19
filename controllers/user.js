@@ -17,6 +17,12 @@ export const register = async (req, res) => {
 
 		// Save the user and wait for the result
 		const user = await newUser.save(); // Make sure to await the save operation
+		
+		const token = jwt.sign({ email }, process.env.JWT_SECRET, {
+			expiresIn: "24h",
+		});
+
+		await emailService.confirmEmail(email, token);
 
 		res.status(201).json({ message: "User  added successfully", user });
 	} catch (error) {
