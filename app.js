@@ -43,24 +43,24 @@ const app = express();
 app.use(cors({ origin: "http://localhost:5173" }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-// app.use(Limter);
 app.use(helmet());
+// app.use(Limter);
+
+
 //APIs goes here
-
 app.use("/api/users", userRouter);
-
 app.use("/api/advices", adviceRouter);
 app.use("/api/appointments", appointmentRouter);
 app.use("/api/diseasescategories", diseasesCategoryRouter);
 app.use("/api/diseases", diseasesRouter);
 app.use("/api/treatments", treatmentRouter);
-
+app.use("/auth", oauthRouter);
 app.use("/api/otp", otpRouter);
+
 // app.use("/advice", adviceRouter);
 // app.use("/diseasescategory", diseasesCategoryRouter);
 // app.use("/diseases", diseasesRouter);
 // app.use("/treatment", treatmentRouter);
-app.use("/auth", oauthRouter);
 // app.post("/test", async (req, res) => {
 // 	const { doctorId, patientId, nurseId, priority, appointmentDate, status } =
 // 		req.body;

@@ -49,6 +49,7 @@ const userSchema = mongoose.Schema(
 			type: String,
 			required: [true, "Role is required"],
 			enum: ["admin", "user", "patient", "doctor", "nurse", "hospital"],
+			default:"user"
 		},
 		specialization: {
 			type: String,
