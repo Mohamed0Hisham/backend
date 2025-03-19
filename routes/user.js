@@ -9,6 +9,7 @@ router.post("/login", userController.login);
 router.post("/logout", userController.logout);
 router.get("/", authenticateJWT, userController.index);
 router.get("/one", authenticateJWT, userController.show);
+router.patch("/", authenticateJWT, userController.update);
 
 // Use export default for the router
 export default router;

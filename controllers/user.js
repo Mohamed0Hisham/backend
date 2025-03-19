@@ -117,3 +117,25 @@ export const show = async (req, res, next) => {
 		);
 	}
 };
+
+export const update = async (req, res, next) => {
+	const id = req.user._id;
+	try {
+		const user = await userModel.findOneAndUpdate({ _id: id }, req.body, {
+			new: true,
+		});
+		return res.status(200).json({
+			message: "User data has been updated",
+			success: true,
+			data: user,
+		});
+	} catch (error) {
+		return next(
+			errorHandler(
+				500,
+				"An error occurred while updating the Disease. Please try again later." +
+					error
+			)
+		);
+	}
+};
