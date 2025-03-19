@@ -52,7 +52,7 @@ app.use("/api/users", userRouter);
 app.use("/api/advices", adviceRouter);
 app.use("/api/appointments", appointmentRouter);
 app.use("/api/diseasescategories", diseasesCategoryRouter);
-app.use("/api/diseaseses", diseasesRouter);
+app.use("/api/diseases", diseasesRouter);
 app.use("/api/treatments", treatmentRouter);
 
 app.use("/api/otp", otpRouter);
