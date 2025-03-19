@@ -22,7 +22,7 @@ export const register = async (req, res) => {
 	} catch (error) {
 		console.error(error); // Log the error for debugging
 		res.status(500).json({
-			message: "An error occurred while registering the user",
+			message: "An error occurred while registering the user "+error,
 		});
 	}
 };
