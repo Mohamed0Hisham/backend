@@ -16,10 +16,13 @@ export const index = async (req, res, next) => {
 			_id: { $in: diseasesCategoryIDs },
 		});
 
-		const diseasesCategoryMap = diseasesCategories.reduce((acc, category) => {
-			acc[category._id.toString()] = category.name;
-			return acc;
-		}, {});
+		const diseasesCategoryMap = diseasesCategories.reduce(
+			(acc, category) => {
+				acc[category._id.toString()] = category.name;
+				return acc;
+			},
+			{}
+		);
 		const advice = adviceList.map(({ diseasesCategoryId, ...item }) => ({
 			...item,
 			diseasesCategoryName:
@@ -36,10 +39,13 @@ export const index = async (req, res, next) => {
 };
 
 export const store = async (req, res, next) => {
-	const doctorId = req.user._id;
+	const user = req.user;
+	if (user.role !== "Admin" || user.role !== "Doctor") {
+		return next(errorHandler(401, "unauthorized operation"));
+	}
 	const { diseasesCategoryId, title, description } = req.body;
 	if (
-		doctorId === null ||
+		user._id === null ||
 		diseasesCategoryId === null ||
 		description === null ||
 		title === null
@@ -54,7 +60,7 @@ export const store = async (req, res, next) => {
 	}
 	try {
 		const newAdvice = await new ADVICE({
-			doctorId,
+			doctorId: user._id,
 			diseasesCategoryId,
 			title,
 			description,
@@ -66,12 +72,19 @@ export const store = async (req, res, next) => {
 			success: true,
 		});
 	} catch (error) {
-		return next(errorHandler(500, "Error while inserting the advice:" + error));
+		return next(
+			errorHandler(500, "Error while inserting the advice:" + error)
+		);
 	}
 };
 
 export const update = async (req, res, next) => {
 	const { id } = req.params;
+	const user = req.user;
+	if (user.role !== "Admin" || user.role !== "Doctor") {
+		return next(errorHandler(401, "unauthorized operation"));
+	}
+
 	if (id == null) {
 		return next(errorHandler(400, "please provide the ID of the advice"));
 	}
@@ -86,16 +99,25 @@ export const update = async (req, res, next) => {
 		});
 	} catch (error) {
 		return next(
-			errorHandler(500, "Error while updating the advice:" + error.message)
+			errorHandler(
+				500,
+				"Error while updating the advice:" + error.message
+			)
 		);
 	}
 };
 
 export const destroy = async (req, res, next) => {
 	const { id } = req.params;
+	const user = req.user;
+	if (user.role !== "Admin" || user.role !== "Doctor") {
+		return next(errorHandler(401, "unauthorized operation"));
+	}
 	try {
 		if (id == null) {
-			return next(errorHandler(400, "Please provide the ID of the advice"));
+			return next(
+				errorHandler(400, "Please provide the ID of the advice")
+			);
 		}
 		await ADVICE.findOneAndDelete({ _id: id });
 		return res.status(200).json({
@@ -104,7 +126,10 @@ export const destroy = async (req, res, next) => {
 		});
 	} catch (error) {
 		return next(
-			errorHandler(500, "Error while deleting the advice:" + error.message)
+			errorHandler(
+				500,
+				"Error while deleting the advice:" + error.message
+			)
 		);
 	}
 };
