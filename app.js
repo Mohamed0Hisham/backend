@@ -13,6 +13,8 @@ import diseasesCategoryRouter from "./routes/diseasesCategory.routes.js";
 import diseasesRouter from "./routes/diseases.routes.js";
 import treatmentRouter from "./routes/treatmnet.routes.js";
 import oauthRouter from "./routes/oauth.routes.js";
+import doctorRouter from "./routes/doctor.routes.js"
+
 // import User from "./models/userModel.js";
 // import Treatment from "./models/treatmentModel.js";
 // import Diseases from "./models/diseasesModel.js";
@@ -56,6 +58,7 @@ app.use("/api/diseases", diseasesRouter);
 app.use("/api/treatments", treatmentRouter);
 app.use("/auth", oauthRouter);
 app.use("/api/otp", otpRouter);
+app.use("/api/doctor", doctorRouter)
 
 // app.use("/advice", adviceRouter);
 // app.use("/diseasescategory", diseasesCategoryRouter);
