@@ -15,17 +15,9 @@ import treatmentRouter from "./routes/treatmnet.routes.js";
 import oauthRouter from "./routes/oauth.routes.js";
 import doctorRouter from "./routes/doctor.routes.js"
 
-// import User from "./models/userModel.js";
-// import Treatment from "./models/treatmentModel.js";
-// import Diseases from "./models/diseasesModel.js";
-// import DiseasesCategory from "./models/diseasesCategory.js";
-// import Advice from "./models/advice.js";
-// import Appointment from "./models/appointmentModel.js";
-
 dotenv.config();
 
 configDotenv();
-// starting the server
 const app = express();
 // const Limter = rateLimter({
 // 	windowMs: 1000 * 60 * 15,
@@ -46,7 +38,6 @@ app.use(cors({ origin: "http://localhost:5173" }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
-// app.use(Limter);
 
 
 //APIs goes here
@@ -59,37 +50,6 @@ app.use("/api/treatments", treatmentRouter);
 app.use("/auth", oauthRouter);
 app.use("/api/otp", otpRouter);
 app.use("/api/doctor", doctorRouter)
-
-// app.use("/advice", adviceRouter);
-// app.use("/diseasescategory", diseasesCategoryRouter);
-// app.use("/diseases", diseasesRouter);
-// app.use("/treatment", treatmentRouter);
-// app.post("/test", async (req, res) => {
-// 	const { doctorId, patientId, nurseId, priority, appointmentDate, status } =
-// 		req.body;
-// 	const test = new Appointment({
-// 		doctorId: doctorId,
-// 		patientId: patientId,
-// 		nurseId: nurseId,
-// 		appointmentDate: appointmentDate,
-// 		priority: priority,
-// 		status: status,
-// 	});
-// 	try {
-// 		await test.save();
-// 		res.json({
-// 			success: true,
-// 			message: "good job",
-// 			data: test,
-// 		});
-// 	} catch (error) {
-// 		res.json({
-// 			success: false,
-// 			message: " mmmmm",
-// 			error: error,
-// 		});
-// 	}
-// });
 
 app.get("*", (req, res) => {
 	return res.status(404).json({
