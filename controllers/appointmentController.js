@@ -83,9 +83,7 @@ export const deleteAppointUser = async (req, res) => {
 			if (!appointment) {
 				await session.abortTransaction();
 				await session.endSession();
-				return res
-					.status(404)
-					.json({ message: "Appointment not found" });
+				return res.status(404).json({ message: "Appointment not found" });
 			}
 
 			await Appointment.findByIdAndDelete(req.params.id).session(session);
@@ -125,16 +123,14 @@ export const deleteAppointDoctor = async (req, res) => {
 		const session = await startSession();
 		try {
 			session.startTransaction();
-			const appointment = await Appointment.findById(
-				req.params.id
-			).session(session);
+			const appointment = await Appointment.findById(req.params.id).session(
+				session
+			);
 			if (!appointment) {
 				await session.abortTransaction();
 				await session.endSession();
 
-				return res
-					.status(404)
-					.json({ message: "Appointment not found" });
+				return res.status(404).json({ message: "Appointment not found" });
 			}
 
 			// Delete the appointment
@@ -209,13 +205,11 @@ export const update = async (req, res) => {
 		try {
 			session.startTransaction();
 			const appointmentId = req.params.id;
-			const oldAppoint = await Appointment.findById(
-				appointmentId
-			).session(session);
+			const oldAppoint = await Appointment.findById(appointmentId).session(
+				session
+			);
 			if (!oldAppoint) {
-				return res
-					.status(404)
-					.json({ message: "Appointment not found" });
+				return res.status(404).json({ message: "Appointment not found" });
 			}
 
 			const doctorId = oldAppoint?.doctorId;
@@ -283,15 +277,8 @@ export const index = async (req, res, next) => {
 	const userId = req.user._id;
 	if (role === "Admin") {
 		try {
-			const page = parseInt(req.query.page) || 1;
-			const limit = 10;
-			const skip = (page - 1) * limit;
-			const appointments = await Appointment.find()
-				.sort({
-					appointmentDate: 1,
-				})
-				.skip(skip)
-				.limit(limit);
+			const appointments = await Appointment.find();
+				
 			if (appointments.length === 0) {
 				return next(errorHandler(404, "There are no appointments"));
 			}
@@ -335,9 +322,7 @@ export const index = async (req, res, next) => {
 
 			// Check if no appointments found
 			if (appointments.length === 0) {
-				return res
-					.status(404)
-					.json({ message: "No appointments found" });
+				return res.status(404).json({ message: "No appointments found" });
 			}
 
 			res.json({
