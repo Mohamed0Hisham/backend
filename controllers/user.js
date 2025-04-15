@@ -151,3 +151,37 @@ export const update = async (req, res, next) => {
 		);
 	}
 };
+
+export const DoctorNames = async (req, res, next) => {
+	try {
+		const doctorNames = await userModel
+			.find(
+				{ role: "Doctor" },
+				{
+					name: 1,
+					city: 1,
+					country: 1,
+					specialization: 1,
+					_id: 0,
+				}
+			)
+			.lean();
+		if (doctorNames.length === 0) {
+			return next(errorHandler(404, "There are no doctors "));
+		}
+		return res.status(200).json({
+			message: "Doctors' names are retrived sucessfully",
+			success: true,
+			data: doctorNames,
+		});
+	} catch (error) {
+		return next(
+			errorHandler(
+				500,
+				500,
+				"An error occurred while updating the Disease. Please try again later." +
+					error
+			)
+		);
+	}
+};
