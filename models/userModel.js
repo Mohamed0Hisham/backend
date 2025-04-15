@@ -53,7 +53,6 @@ const userSchema = mongoose.Schema(
 		},
 		specialization: {
 			type: String,
-			require: [true, "specialization is required"],
 			maxLength: [40, "Specialization MUST NOT exceed 40 characters"],
 		},
 		appoints: [],
