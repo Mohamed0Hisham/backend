@@ -55,7 +55,7 @@ const userSchema = mongoose.Schema(
 			type: String,
 			maxLength: [40, "Specialization MUST NOT exceed 40 characters"],
 		},
-		appointments: {
+		Appointment: {
 			type: [ mongoose.Schema.Types.ObjectId ],
 			ref: "Appointment",
 		},

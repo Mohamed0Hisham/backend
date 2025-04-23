@@ -10,7 +10,7 @@ const router = express.Router();
 router.get("/profile", authenticateJWT, async (req, res, next) => {
 	try {
 		const user = req.user;
-		if (user.role !== "Admin" || user.role !== "Doctor") {
+		if (user.role !== "Admin" && user.role !== "Doctor") {
 			return next(errorHandler(401, "unauthorized operation"));
 		}
 		const doctor = await User.findById(user._id, {
@@ -38,7 +38,7 @@ router.get("/profile", authenticateJWT, async (req, res, next) => {
 			phone: doctor.phone,
 			city: doctor.city,
 			country: doctor.country,
-			major: doctor.specialization,
+			specialization: doctor.specialization,
 		};
 
 		return res.status(200).json({
