@@ -53,10 +53,10 @@ router.get("/profile", authenticateJWT, async (req, res, next) => {
 
 router.post("/new-doctor", async (req, res, next) => {
 	const email = req.body.email;
-	if (!email) throw new Error("no email provided");
+	if (!email) return next(errorHandler(400, "no email provided")) ;
 
 	const isExist = await User.findOne({ email });
-	if (isExist) throw new Error("doctor already registered");
+	if (isExist) return next(errorHandler(400, "doctor already registered")) ;
 
 	try {
 		const {
