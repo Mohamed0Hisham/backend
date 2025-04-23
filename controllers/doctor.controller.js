@@ -67,7 +67,7 @@ export const update = async (req, res, next) => {
 			});
 		}
 
-		const userID = req.user._id;
+		const userID = req.params.id;
 		const doctor = await User.findByIdAndUpdate(userID, req.body, {
 			new: true,
 		}).lean();
@@ -133,8 +133,10 @@ export const store = async (req, res, next) => {
 
 export const destroy = async (req, res, next) => {
 	try {
-		const userID = req.user._id;
+		const userID = req.params.id;
 
+		const user = await User.findById(userID);
+		if (!user) return next(errorHandler(404, "no such user exist"));
 		await User.findByIdAndDelete(userID);
 
 		return res.status(200).json({

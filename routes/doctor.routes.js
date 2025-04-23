@@ -12,8 +12,8 @@ router.get("/", authenticateJWT, show);
 
 router.post("/", store);
 
-router.put("/", authenticateJWT, update);
+router.put("/:id", authenticateJWT, update);
 
-router.delete("/", authenticateJWT, destroy);
+router.delete("/:id", authenticateJWT, destroy);
 
 export default router;
