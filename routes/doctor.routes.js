@@ -2,7 +2,8 @@ import express from "express";
 import authenticateJWT from "../middlewares/auth.js";
 import { errorHandler } from "../helpers/errorHandler.js";
 import User from "../models/userModel.js";
-import { hash } from "bcryptjs";
+import bcryptjs from "bcryptjs";
+import emailService from "../Mail/emailService.js";
 const router = express.Router();
 
 router.get("/profile", authenticateJWT, async (req, res, next) => {
@@ -50,7 +51,7 @@ router.get("/profile", authenticateJWT, async (req, res, next) => {
 	}
 });
 
-router.post("/new-doctor", authenticateJWT, async (req, res, next) => {
+router.post("/new-doctor", async (req, res, next) => {
 	const email = req.body.email;
 	if (!email) throw new Error("no email provided");
 
@@ -68,7 +69,7 @@ router.post("/new-doctor", authenticateJWT, async (req, res, next) => {
 			country,
 			specialization,
 		} = req.body;
-		const hashedPass = await hash(password, 10);
+		const hashedPass = await bcryptjs.hash(password, 10);
 		if (!specialization) specialization = "N/A";
 
 		const user = new User({
