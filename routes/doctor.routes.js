@@ -124,13 +124,13 @@ router.put("/update", authenticateJWT, async (req, res, next) => {
 		if (!doctor) {
 			return res.status(400).json({
 				success: false,
-				message: "User not found",
+				message: "doctor not found",
 			});
 		}
 
 		return res.status(200).json({
 			success: true,
-			message: "User profile updated",
+			message: "doctor profile updated",
 			doctor,
 		});
 	} catch (error) {
@@ -138,4 +138,20 @@ router.put("/update", authenticateJWT, async (req, res, next) => {
 		return next(errorHandler(500, error.message));
 	}
 });
+
+router.delete("/deletion",authenticateJWT ,async (req,res,next) => {
+	try {
+		const userID = req.user._id;
+
+		await User.findByIdAndDelete(userID);
+
+		return res.status(200).json({
+			success: true,
+			message: "doctor profile deleted",
+			doctor,
+		});
+	} catch (error) {
+		return next(errorHandler(500, error.message));
+	}
+})
 export default router;
