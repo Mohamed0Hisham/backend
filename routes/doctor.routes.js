@@ -143,7 +143,6 @@ router.delete("/deletion", authenticateJWT, async (req, res, next) => {
 		return res.status(200).json({
 			success: true,
 			message: "doctor profile deleted",
-			doctor,
 		});
 	} catch (error) {
 		return next(errorHandler(500, error.message));
