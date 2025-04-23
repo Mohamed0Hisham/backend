@@ -2,6 +2,7 @@ import express from "express";
 import authenticateJWT from "../middlewares/auth.js";
 import { errorHandler } from "../helpers/errorHandler.js";
 import User from "../models/userModel.js";
+import { hash } from "bcryptjs";
 const router = express.Router();
 
 router.get("/profile", authenticateJWT, async (req, res, next) => {
@@ -44,6 +45,52 @@ router.get("/profile", authenticateJWT, async (req, res, next) => {
 			doctor: formatted,
 			appointments: user.appointments,
 		});
+	} catch (error) {
+		return next(errorHandler(500, error.message));
+	}
+});
+
+router.post("/new-doctor", async (req, res, next) => {
+	const email = req.body.email;
+	if (!email) throw new Error("no email provided");
+
+	const isExist = await User.findOne({ email });
+	if (isExist) throw new Error("doctor already registered");
+
+	try {
+		const {
+			name,
+			gender,
+			email,
+			password,
+			phone,
+			city,
+			country,
+			specialization,
+		} = req.body;
+		const hashedPass = await hash(password, 10);
+		if (!specialization) specialization = "N/A";
+
+		const user = new User({
+			name,
+			gender,
+			email,
+			password: hashedPass,
+			phone,
+			city,
+			country,
+			role: "doctor",
+			specialization,
+		});
+
+		const token = jwt.sign({ email: email }, process.env.JWT_SECRET, {
+			expiresIn: "24h",
+		});
+
+		await User.create(user);
+		await emailService.confirmEmail(email, token);
+
+		return res.status(201).json({ message: "confirmation email has been sent" });
 	} catch (error) {
 		return next(errorHandler(500, error.message));
 	}
