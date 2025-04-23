@@ -4,6 +4,7 @@ import { errorHandler } from "../helpers/errorHandler.js";
 import User from "../models/userModel.js";
 import bcryptjs from "bcryptjs";
 import emailService from "../Mail/emailService.js";
+import jwt from "jsonwebtoken"
 const router = express.Router();
 
 router.get("/profile", authenticateJWT, async (req, res, next) => {
@@ -53,24 +54,17 @@ router.get("/profile", authenticateJWT, async (req, res, next) => {
 
 router.post("/new-doctor", async (req, res, next) => {
 	const email = req.body.email;
-	if (!email) return next(errorHandler(400, "no email provided")) ;
+	if (!email) return next(errorHandler(400, "no email provided"));
 
 	const isExist = await User.findOne({ email });
-	if (isExist) return next(errorHandler(400, "doctor already registered")) ;
+	if (isExist) return next(errorHandler(400, "doctor already registered"));
 
 	try {
-		const {
-			name,
-			gender,
-			email,
-			password,
-			phone,
-			city,
-			country,
-			specialization,
-		} = req.body;
-		const hashedPass = await bcryptjs.hash(password, 10);
+		const { name, gender, password, phone, city, country } = req.body;
+		let specialization = req.body.specialization;
 		if (!specialization) specialization = "N/A";
+
+		const hashedPass = await bcryptjs.hash(password, 10);
 
 		const user = new User({
 			name,
@@ -80,7 +74,7 @@ router.post("/new-doctor", async (req, res, next) => {
 			phone,
 			city,
 			country,
-			role: "doctor",
+			role: "Doctor",
 			specialization,
 		});
 
@@ -140,7 +134,7 @@ router.put("/update", authenticateJWT, async (req, res, next) => {
 	}
 });
 
-router.delete("/deletion",authenticateJWT ,async (req,res,next) => {
+router.delete("/deletion", authenticateJWT, async (req, res, next) => {
 	try {
 		const userID = req.user._id;
 
@@ -154,5 +148,5 @@ router.delete("/deletion",authenticateJWT ,async (req,res,next) => {
 	} catch (error) {
 		return next(errorHandler(500, error.message));
 	}
-})
+});
 export default router;
