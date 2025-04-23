@@ -50,7 +50,7 @@ router.get("/profile", authenticateJWT, async (req, res, next) => {
 	}
 });
 
-router.post("/new-doctor", async (req, res, next) => {
+router.post("/new-doctor", authenticateJWT, async (req, res, next) => {
 	const email = req.body.email;
 	if (!email) throw new Error("no email provided");
 
@@ -90,10 +90,52 @@ router.post("/new-doctor", async (req, res, next) => {
 		await User.create(user);
 		await emailService.confirmEmail(email, token);
 
-		return res.status(201).json({ message: "confirmation email has been sent" });
+		return res
+			.status(201)
+			.json({ message: "confirmation email has been sent" });
 	} catch (error) {
 		return next(errorHandler(500, error.message));
 	}
 });
 
+router.put("/update", authenticateJWT, async (req, res, next) => {
+	try {
+		const { password, ...rest } = req.body;
+
+		if (!req.body) {
+			return res.status(400).json({
+				success: false,
+				message: "invalid operation",
+			});
+		}
+
+		if (password && password.length > 0) {
+			return res.status(400).json({
+				success: false,
+				message: "you are fetching the wrong enpoint",
+			});
+		}
+
+		const userID = req.user._id;
+		const doctor = await User.findByIdAndUpdate(userID, req.body, {
+			new: true,
+		}).lean();
+
+		if (!doctor) {
+			return res.status(400).json({
+				success: false,
+				message: "User not found",
+			});
+		}
+
+		return res.status(200).json({
+			success: true,
+			message: "User profile updated",
+			doctor,
+		});
+	} catch (error) {
+		console.error("Update Profile Error:", error);
+		return next(errorHandler(500, error.message));
+	}
+});
 export default router;
