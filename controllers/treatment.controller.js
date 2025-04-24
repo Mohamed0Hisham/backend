@@ -1,5 +1,6 @@
 import TREATMENT from "../models/treatment.model.js";
 import { errorHandler } from "../helpers/errorHandler.js";
+import mongoose from "mongoose";
 
 export const index = async (req, res, next) => {
 	try {
@@ -10,6 +11,31 @@ export const index = async (req, res, next) => {
 		return res.status(200).json({
 			data: Treatments,
 			msg: "All Treatments are retrieved",
+			success: true,
+		});
+	} catch (error) {
+		return next(
+			errorHandler(
+				500,
+				"An error occurred while retrieving the Treatment. Please try again later." +
+					error
+			)
+		);
+	}
+};
+export const show = async (req, res, next) => {
+	try {
+		const id = req.params.id;
+		if (!mongoose.Types.ObjectId.isValid(id)) {
+			return next(errorHandler(400, "Invalid Treatment ID"));
+		}
+		const treatment = await TREATMENT.findById(id);
+		if (!treatment) {
+			return next(errorHandler(404, "Can't found this treatment"));
+		}
+		return res.status(200).json({
+			data: treatment,
+			msg: "This Treatment has been found",
 			success: true,
 		});
 	} catch (error) {

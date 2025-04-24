@@ -1,5 +1,6 @@
 import DISEASES from "../models/diseases.model.js";
 import DiseasesCategory from "../models/diseasesCategory.model.js";
+import mongoose from "mongoose";
 
 import { errorHandler } from "../helpers/errorHandler.js";
 
@@ -49,7 +50,31 @@ export const index = async (req, res, next) => {
 		);
 	}
 };
-
+export const show = async (req, res, next) => {
+	try {
+		const id = req.params.id;
+		if (!mongoose.Types.ObjectId.isValid(id)) {
+			return next(errorHandler(400, "Invalid Treatment ID"));
+		}
+		const disease = await DISEASES.findById(id);
+		if (!disease) {
+			return next(errorHandler(404, "Can't found this Disease"));
+		}
+		return res.status(200).json({
+			data: disease,
+			msg: "This Disease has been found",
+			success: true,
+		});
+	} catch (error) {
+		return next(
+			errorHandler(
+				500,
+				"An error occurred while retrieving the Disease. Please try again later." +
+					error
+			)
+		);
+	}
+};
 export const store = async (req, res, next) => {
 	const { name, description, rank, diseasecategoryId } = req.body;
 	if (
