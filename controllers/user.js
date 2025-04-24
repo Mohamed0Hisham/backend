@@ -88,6 +88,11 @@ export const logout = async (req, res) => {
 
 export const index = async (req, res, next) => {
 	try {
+		if (req.user.role != "Admin") {
+			res.status(403).json({
+				message: "This Action is forbidden",
+			});
+		}
 		const users = await userModel.find();
 		if (users.length === 0) {
 			return next(errorHandler(404, "There are no users "));
