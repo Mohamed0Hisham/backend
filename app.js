@@ -12,6 +12,7 @@ import adviceRouter from "./routes/advice.routes.js";
 import diseasesCategoryRouter from "./routes/diseasesCategory.routes.js";
 import diseasesRouter from "./routes/diseases.routes.js";
 import treatmentRouter from "./routes/treatmnet.routes.js";
+import advertisementtRouter from "./routes/advertisement.routes.js";
 import oauthRouter from "./routes/oauth.routes.js";
 // import User from "./models/userModel.js";
 // import Treatment from "./models/treatmentModel.js";
@@ -46,7 +47,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
 // app.use(Limter);
 
-
 //APIs goes here
 app.use("/api/users", userRouter);
 app.use("/api/advices", adviceRouter);
@@ -54,6 +54,7 @@ app.use("/api/appointments", appointmentRouter);
 app.use("/api/diseasescategories", diseasesCategoryRouter);
 app.use("/api/diseases", diseasesRouter);
 app.use("/api/treatments", treatmentRouter);
+app.use("/api/advertisements", advertisementtRouter);
 app.use("/auth", oauthRouter);
 app.use("/api/otp", otpRouter);
 
