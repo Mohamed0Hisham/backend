@@ -1,4 +1,7 @@
 import mongoose from "mongoose";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const adviceSchema = mongoose.Schema(
 	{
@@ -21,6 +24,15 @@ const adviceSchema = mongoose.Schema(
 			type: String,
 			required: [true, "This Advice MUST have a description"],
 			maxLength: [400, "Description MUST NOT exceed 400 characters"],
+		},
+		ImgUrl: {
+			type: String,
+			// default:
+			// 	"https://res.cloudinary.com/dweffiohi/image/upload/v1745584464/ncwaujyakzftizl78kvp.jpg",
+		},
+		ImgPublicId: {
+			type: String,
+			// default: process.env.ADVICE_DEFAULT_IMAGE_PUBLICID,
 		},
 	},
 	{

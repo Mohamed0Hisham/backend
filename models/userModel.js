@@ -1,5 +1,8 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const userSchema = mongoose.Schema(
 	{
@@ -59,6 +62,15 @@ const userSchema = mongoose.Schema(
 		otp: { type: String },
 		otpExpiry: { type: Date },
 		isVerified: { type: Boolean, default: false },
+		ImgUrl: {
+			type: String,
+			default:
+				"https://res.cloudinary.com/dweffiohi/image/upload/v1745583748/wn6wqxmsalbweclrngrn.jpg",
+		},
+		ImgPublicId: {
+			type: String,
+			default: process.env.USER_DEFAULT_IMAGE_PUBLICID,
+		},
 	},
 	{
 		timestamps: true,
