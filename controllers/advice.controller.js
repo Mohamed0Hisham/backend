@@ -2,6 +2,8 @@ import ADVICE from "../models/advice.model.js";
 import USER from "../models/userModel.js";
 import DiseasesCategory from "../models/diseasesCategory.model.js";
 import { errorHandler } from "../helpers/errorHandler.js";
+import mongoose from "mongoose";
+import { uploadImg, deleteImg } from "../helpers/images.js";
 
 export const index = async (req, res, next) => {
 	try {
@@ -56,32 +58,31 @@ export const index = async (req, res, next) => {
 };
 
 export const store = async (req, res, next) => {
-	const doctorId = req.user._id;
-	const { diseasesCategoryId, title, description } = req.body;
+	const result = { ...req.body };
+	result.doctorId = req.user._id;
 	if (
-		doctorId === null ||
-		diseasesCategoryId === null ||
-		description === null ||
-		title === null
+		!result.doctorId ||
+		!result.diseasesCategoryId ||
+		!result.description ||
+		!result.title ||
+		!req.file
 	) {
 		return next(errorHandler(400, "Please provide all required fields"));
 	}
-	if (description.length > 400) {
+	if (result.description.length > 400) {
 		return next(errorHandler(422, "Description is too long"));
 	}
-	if (title.length > 400) {
+	if (result.title.length > 400) {
 		return next(errorHandler(422, "Description is too long"));
 	}
 	try {
-		const newAdvice = await new ADVICE({
-			doctorId,
-			diseasesCategoryId,
-			title,
-			description,
-		});
-		const result = await newAdvice.save();
+		const image = await uploadImg(req.file);
+		result.ImgUrl = image.ImgUrl;
+		result.ImgPublicId = image.ImgPublicId;
+		const newAdvice = await new ADVICE(result);
+		await newAdvice.save();
 		return res.status(201).json({
-			data: result,
+			data: newAdvice,
 			message: "successfully inserted",
 			success: true,
 		});
@@ -91,16 +92,36 @@ export const store = async (req, res, next) => {
 };
 
 export const update = async (req, res, next) => {
-	const { id } = req.params;
-	if (id == null) {
+	const id = req.params.id;
+	if (!id) {
 		return next(errorHandler(400, "please provide the ID of the advice"));
 	}
+	if (!mongoose.Types.ObjectId.isValid(id)) {
+		return next(errorHandler(400, "Invalid Advertisment ID"));
+	}
+	const result = { ...req.body };
+	result.id = id;
 	try {
-		const result = await ADVICE.findOneAndUpdate({ _id: id }, req.body, {
-			new: true,
-		}).lean();
+		if (req.file) {
+			try {
+				const advice = await ADVICE.findById(id);
+				const image = await uploadImg(req.file);
+				await deleteImg(advice.ImgPublicId);
+				result.ImgUrl = image.ImgUrl;
+				result.ImgPublicId = image.ImgPublicId;
+			} catch (error) {
+				return next(
+					errorHandler(500, "Error while Upload or delete picture" + error)
+				);
+			}
+		}
+		const UpdatedAdvice = await ADVICE.findByIdAndUpdate(
+			id,
+			{ $set: result }, // Update only the fields provided in req.body
+			{ new: true } // Return the updated document
+		).lean();
 		return res.status(200).json({
-			data: result,
+			data: UpdatedAdvice,
 			message: "successfully updated",
 			success: true,
 		});
@@ -112,12 +133,17 @@ export const update = async (req, res, next) => {
 };
 
 export const destroy = async (req, res, next) => {
-	const { id } = req.params;
+	const id = req.params.id;
 	try {
-		if (id == null) {
+		if (!id) {
 			return next(errorHandler(400, "Please provide the ID of the advice"));
 		}
-		await ADVICE.findOneAndDelete({ _id: id });
+		if (!mongoose.Types.ObjectId.isValid(id)) {
+			return next(errorHandler(400, "Invalid Advertisment ID"));
+		}
+		const advice = await ADVICE.findById(id);
+		await deleteImg(advice.ImgPublicId);
+		await ADVICE.deleteOne({ _id: id });
 		return res.status(200).json({
 			success: true,
 			message: "deleted successfully",
