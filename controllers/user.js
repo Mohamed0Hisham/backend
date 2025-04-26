@@ -6,6 +6,7 @@ import { errorHandler } from "../helpers/errorHandler.js";
 import emailService from "../Mail/emailService.js";
 import { uploadImg, deleteImg } from "../helpers/images.js";
 import dotenv from "dotenv";
+import mongoose from "mongoose";
 
 dotenv.config();
 
@@ -189,9 +190,12 @@ export const DoctorNames = async (req, res, next) => {
 				{ role: "Doctor" },
 				{
 					name: 1,
+					phone: 1,
 					city: 1,
 					country: 1,
+					ImgUrl: 1,
 					specialization: 1,
+					rate: 1,
 					_id: 0,
 				}
 			)
@@ -217,9 +221,11 @@ export const DoctorNames = async (req, res, next) => {
 };
 
 export const destroy = async (req, res, next) => {
-	const id = req.user._id;
 	const role = req.user.role;
 	const UserId = req.params.id;
+	if (!mongoose.Types.ObjectId.isValid(id)) {
+		return next(errorHandler(400, "Invalid Advertisment ID"));
+	}
 	if (UserId == null) {
 		return next(errorHandler(400, "All required fields must be provided."));
 	}
