@@ -71,6 +71,12 @@ const userSchema = mongoose.Schema(
 			type: String,
 			default: process.env.USER_DEFAULT_IMAGE_PUBLICID,
 		},
+		rate: {
+			type: Number,
+			required: true,
+			min: 1,
+			max: 5,
+		},
 	},
 	{
 		timestamps: true,
