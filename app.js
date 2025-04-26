@@ -13,6 +13,7 @@ import diseasesCategoryRouter from "./routes/diseasesCategory.routes.js";
 import diseasesRouter from "./routes/diseases.routes.js";
 import treatmentRouter from "./routes/treatmnet.routes.js";
 import advertisementtRouter from "./routes/advertisement.routes.js";
+import ratingtRouter from "./routes/rating.routes.js";
 import oauthRouter from "./routes/oauth.routes.js";
 dotenv.config();
 
@@ -47,6 +48,7 @@ app.use("/api/diseasescategories", diseasesCategoryRouter);
 app.use("/api/diseases", diseasesRouter);
 app.use("/api/treatments", treatmentRouter);
 app.use("/api/advertisements", advertisementtRouter);
+app.use("/api/rate", ratingtRouter);
 app.use("/auth", oauthRouter);
 app.use("/api/otp", otpRouter);
 
