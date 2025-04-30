@@ -53,8 +53,8 @@ app.use("/api/advertisements", advertisementtRouter);
 app.use("/api/rate", ratingtRouter);
 app.use("/auth", oauthRouter);
 app.use("/api/otp", otpRouter);
-app.use ("/message",messageRouter);
-app.use("/conversation",conversationRouter)
+app.use ("/api/message",messageRouter);
+app.use("/api/conversation",conversationRouter)
 
 app.get("*", (req, res) => {
 	return res.status(404).json({
