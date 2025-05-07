@@ -29,6 +29,7 @@ const appointmentSchema = mongoose.Schema(
 			type: String,
 			required: [true, "You MUST define priority for this appointment"],
 			enum: ["critical", "important", "moderate", "low"],
+			required: [true, "Appointment Priority is required"],
 		},
 		appointmentDate: {
 			type: Date,
