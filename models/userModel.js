@@ -73,7 +73,7 @@ const userSchema = mongoose.Schema(
 		},
 		rate: {
 			type: Number,
-			//required: true,
+			required: true,
 			min: 1,
 			max: 5,
 		},
