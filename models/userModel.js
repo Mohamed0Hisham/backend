@@ -1,5 +1,8 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const userSchema = mongoose.Schema(
 	{
@@ -48,8 +51,8 @@ const userSchema = mongoose.Schema(
 		role: {
 			type: String,
 			required: [true, "Role is required"],
-			enum: ["Admin", "User", "Patient", "Doctor", "Nurse", "Hospital"],
-			default: "user",
+			enum: ["Admin", "Patient", "Doctor", "Nurse", "Hospital"],
+			default: "Patient",
 		},
 		specialization: {
 			type: String,
@@ -59,6 +62,21 @@ const userSchema = mongoose.Schema(
 		otp: { type: String },
 		otpExpiry: { type: Date },
 		isVerified: { type: Boolean, default: false },
+		ImgUrl: {
+			type: String,
+			default:
+				"https://res.cloudinary.com/dweffiohi/image/upload/v1745583748/wn6wqxmsalbweclrngrn.jpg",
+		},
+		ImgPublicId: {
+			type: String,
+			default: process.env.USER_DEFAULT_IMAGE_PUBLICID,
+		},
+		rate: {
+			type: Number,
+			required: true,
+			min: 1,
+			max: 5,
+		},
 	},
 	{
 		timestamps: true,

@@ -12,14 +12,11 @@ import adviceRouter from "./routes/advice.routes.js";
 import diseasesCategoryRouter from "./routes/diseasesCategory.routes.js";
 import diseasesRouter from "./routes/diseases.routes.js";
 import treatmentRouter from "./routes/treatmnet.routes.js";
+import advertisementtRouter from "./routes/advertisement.routes.js";
+import ratingtRouter from "./routes/rating.routes.js";
 import oauthRouter from "./routes/oauth.routes.js";
-// import User from "./models/userModel.js";
-// import Treatment from "./models/treatmentModel.js";
-// import Diseases from "./models/diseasesModel.js";
-// import DiseasesCategory from "./models/diseasesCategory.js";
-// import Advice from "./models/advice.js";
-// import Appointment from "./models/appointmentModel.js";
-
+import messageRouter from "./routes/message.routes.js"
+import conversationRouter from "./routes/conversation.router.js"
 dotenv.config();
 
 configDotenv();
@@ -39,13 +36,11 @@ const app = express();
 // 		credentials: true, // Allow cookies (if needed)
 // 	})
 // );
-
 app.use(cors({ origin: "http://localhost:5173" }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
 // app.use(Limter);
-
 
 //APIs goes here
 app.use("/api/users", userRouter);
@@ -54,39 +49,12 @@ app.use("/api/appointments", appointmentRouter);
 app.use("/api/diseasescategories", diseasesCategoryRouter);
 app.use("/api/diseases", diseasesRouter);
 app.use("/api/treatments", treatmentRouter);
+app.use("/api/advertisements", advertisementtRouter);
+app.use("/api/rate", ratingtRouter);
 app.use("/auth", oauthRouter);
 app.use("/api/otp", otpRouter);
-
-// app.use("/advice", adviceRouter);
-// app.use("/diseasescategory", diseasesCategoryRouter);
-// app.use("/diseases", diseasesRouter);
-// app.use("/treatment", treatmentRouter);
-// app.post("/test", async (req, res) => {
-// 	const { doctorId, patientId, nurseId, priority, appointmentDate, status } =
-// 		req.body;
-// 	const test = new Appointment({
-// 		doctorId: doctorId,
-// 		patientId: patientId,
-// 		nurseId: nurseId,
-// 		appointmentDate: appointmentDate,
-// 		priority: priority,
-// 		status: status,
-// 	});
-// 	try {
-// 		await test.save();
-// 		res.json({
-// 			success: true,
-// 			message: "good job",
-// 			data: test,
-// 		});
-// 	} catch (error) {
-// 		res.json({
-// 			success: false,
-// 			message: " mmmmm",
-// 			error: error,
-// 		});
-// 	}
-// });
+app.use ("/api/message",messageRouter);
+app.use("/api/conversation",conversationRouter)
 
 app.get("*", (req, res) => {
 	return res.status(404).json({

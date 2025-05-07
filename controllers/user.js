@@ -4,6 +4,11 @@ import jwt from "jsonwebtoken";
 import { addToBlacklist } from "./blacklist.js";
 import { errorHandler } from "../helpers/errorHandler.js";
 import emailService from "../Mail/emailService.js";
+import { uploadImg, deleteImg } from "../helpers/images.js";
+import dotenv from "dotenv";
+import mongoose from "mongoose";
+
+dotenv.config();
 
 export const register = async (req, res) => {
 	try {
@@ -88,6 +93,11 @@ export const logout = async (req, res) => {
 
 export const index = async (req, res, next) => {
 	try {
+		if (req.user.role != "Admin") {
+			res.status(403).json({
+				message: "This Action is forbidden",
+			});
+		}
 		const users = await userModel.find();
 		if (users.length === 0) {
 			return next(errorHandler(404, "There are no users "));
@@ -133,19 +143,110 @@ export const show = async (req, res, next) => {
 export const update = async (req, res, next) => {
 	const id = req.user._id;
 	try {
-		const user = await userModel.findOneAndUpdate({ _id: id }, req.body, {
-			new: true,
-		});
+		const user = await userModel.findById(id);
+		const result = { ...req.body }; // put all data wanted to be updated in one object because we have images and normal data form body
+
+		// check whether there is an image or not
+		if (req.file) {
+			try {
+				const image = await uploadImg(req.file);
+				// check whether the user's image is the default or not, if not the default we delete it
+				if (user.ImgPublicId != process.env.USER_DEFAULT_IMAGE_PUBLICID) {
+					await deleteImg(user.ImgPublicId);
+				}
+				result.ImgPublicId = image.ImgPublicId;
+				result.ImgUrl = image.ImgUrl;
+			} catch (error) {
+				return next(
+					errorHandler(500, "Error while Upload or delete picture" + error)
+				);
+			}
+		}
+		const updatedUser = await userModel.findByIdAndUpdate(
+			id,
+			{ $set: result }, // Update only the fields provided in req.body
+			{ new: true } // Return the updated document
+		);
 		return res.status(200).json({
 			message: "User data has been updated",
 			success: true,
-			data: user,
+			data: updatedUser,
 		});
 	} catch (error) {
 		return next(
 			errorHandler(
 				500,
 				"An error occurred while updating the Disease. Please try again later." +
+					error
+			)
+		);
+	}
+};
+
+export const DoctorNames = async (req, res, next) => {
+	try {
+		const doctorNames = await userModel
+			.find(
+				{ role: "Doctor" },
+				{
+					name: 1,
+					phone: 1,
+					city: 1,
+					country: 1,
+					ImgUrl: 1,
+					specialization: 1,
+					rate: 1,
+					_id: 0,
+				}
+			)
+			.lean();
+		if (doctorNames.length === 0) {
+			return next(errorHandler(404, "There are no doctors "));
+		}
+		return res.status(200).json({
+			message: "Doctors' names are retrived sucessfully",
+			success: true,
+			data: doctorNames,
+		});
+	} catch (error) {
+		return next(
+			errorHandler(
+				500,
+				500,
+				"An error occurred while updating the Disease. Please try again later." +
+					error
+			)
+		);
+	}
+};
+
+export const destroy = async (req, res, next) => {
+	const role = req.user.role;
+	const UserId = req.params.id;
+	if (!mongoose.Types.ObjectId.isValid(id)) {
+		return next(errorHandler(400, "Invalid Advertisment ID"));
+	}
+	if (UserId == null) {
+		return next(errorHandler(400, "All required fields must be provided."));
+	}
+	if (role != "Admin") {
+		return next(errorHandler(403, "You are Unauthorized to do this action"));
+	}
+	try {
+		const user = await userModel.findById(UserId);
+		if (!user) {
+			return res.status(404).json({ message: "User not found" });
+		}
+		await userModel.findOneAndDelete({ _id: UserId });
+		return res.status(204).json({
+			msg: "The User has been successfully deleted",
+			success: true,
+		});
+	} catch (error) {
+		return next(
+			errorHandler(
+				500,
+				"An error occurred while deleting the User. Please try again later." +
 					error
 			)
 		);
