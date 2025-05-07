@@ -18,9 +18,21 @@ export const store = async (req, res) => {
 		const doctorId = req.params.id;
 		const doctor = await user.findById(doctorId);
 		const role = req.user.role;
-
+		const { nurseId, priority, appointmentDate } = req.body;
+        const currentDate = new Date();
+		currentDate.setHours(0,0,0,0);
+        const appointDate = new Date(appointmentDate);
+			if(appointDate < currentDate){
+				await session.abortTransaction();
+				
+				return res.status(400).send({
+					success: false,
+				message: "Appointment date must be today or in the future.",
+				})
+			}
 		if (role !== "Admin" && role !== "Hospital") {
-			const { nurseId, priority, appointmentDate } = req.body;
+			
+            
 			const appoint = new Appointment({
 				patientId,
 				nurseId,
