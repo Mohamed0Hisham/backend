@@ -219,4 +219,32 @@ router.put("/:patientId/:diagnosisId", isAuth, async (req, res, next) => {
 	}
 });
 
+router.delete("/:diagnosisId", isAuth, async (req, res, next) => {
+	try {
+		const user = req.user;
+		if (
+			user.role !== "Admin" &&
+			user.role !== "Doctor" &&
+			user.role !== "Hospital"
+		)
+			return next(errorHandler(401, "unauthorized operation"));
+
+		const { diagnosisId } = req.params;
+		if (!diagnosisId)
+			return next(errorHandler(400, "missing diagnosis ID"));
+
+		const diagnosis = await Diagnosis.findById(diagnosisId).lean();
+		if (!diagnosis)
+			return next(errorHandler(404, "Diagnosis doesn't exist"));
+
+		await Diagnosis.findByIdAndDelete(diagnosisId).lean();
+
+		return res.status(200).json({
+			success: true,
+			message: "diagnosis deleted successfully",
+		});
+	} catch (error) {
+		return next(error);
+	}
+});
 export default router;
