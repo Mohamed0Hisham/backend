@@ -47,9 +47,11 @@ router.get("/all", isAuth, async (req, res, next) => {
 		if (user.role !== "Admin" && user.role !== "Hospital")
 			return next(errorHandler(401, "Unauthorized operation"));
 
-		const patients = await User.find({ role: "Patient" }).select(
-			"-password -createdAt -updatedAt -rate -specialization -otp -otpExpiry"
-		).lean();
+		const patients = await User.find({ role: "Patient" })
+			.select(
+				"-password -createdAt -updatedAt -rate -specialization -otp -otpExpiry"
+			)
+			.lean();
 
 		if (!patients || patients.length === 0) {
 			return next(errorHandler(404, "No Patients in the Database!"));
@@ -124,9 +126,10 @@ router.post("/new", async (req, res, next) => {
 	}
 });
 
-router.put("/", isAuth, async (req, res, next) => {
+router.put("/:id", isAuth, async (req, res, next) => {
 	try {
-		const user = req.user;
+		const { id } = req.params;
+		if (!id) return next(errorHandler(400, "missing patient id"));
 
 		const {
 			name,
@@ -156,7 +159,7 @@ router.put("/", isAuth, async (req, res, next) => {
 			);
 		}
 
-		const updated = await User.findByIdAndUpdate(user._id, req.body, {
+		const updated = await User.findByIdAndUpdate(id, req.body, {
 			new: true,
 		}).lean();
 
@@ -164,6 +167,21 @@ router.put("/", isAuth, async (req, res, next) => {
 			success: true,
 			message: "patient profile updated",
 			data: updated,
+		});
+	} catch (error) {
+		return next(error);
+	}
+});
+
+router.delete("/:id", isAuth, async (req, res, next) => {
+	try {
+		const { id } = req.params;
+		if (!id) return next(errorHandler(400, "missing patient id"));
+
+		await User.findByIdAndDelete(id);
+		return res.status(200).json({
+			success: true,
+			message: "patient deleted from database",
 		});
 	} catch (error) {
 		return next(error);
