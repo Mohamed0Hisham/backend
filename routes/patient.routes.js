@@ -27,7 +27,7 @@ router.get("/:id", isAuth, async (req, res, next) => {
 			specialization: 0,
 			otp: 0,
 			otpExpiry: 0,
-		});
+		}).lean();
 		if (!patient || patient.role !== "Patient")
 			return next(errorHandler(404, "patient doesn't exist at database"));
 
@@ -49,7 +49,7 @@ router.get("/all", isAuth, async (req, res, next) => {
 
 		const patients = await User.find({ role: "Patient" }).select(
 			"-password -createdAt -updatedAt -rate -specialization -otp -otpExpiry"
-		);
+		).lean();
 
 		if (!patients || patients.length === 0) {
 			return next(errorHandler(404, "No Patients in the Database!"));
@@ -118,6 +118,52 @@ router.post("/new", async (req, res, next) => {
 		return res.status(201).json({
 			success: true,
 			message: "added patient to database",
+		});
+	} catch (error) {
+		return next(error);
+	}
+});
+
+router.put("/", isAuth, async (req, res, next) => {
+	try {
+		const user = req.user;
+
+		const {
+			name,
+			gender,
+			email,
+			phone,
+			city,
+			country,
+			emergencyContact,
+			familyHistory,
+			insuranceInfo,
+		} = req.body;
+
+		if (
+			!name &&
+			!gender &&
+			!emergencyContact &&
+			!familyHistory &&
+			!insuranceInfo &&
+			!email &&
+			!phone &&
+			!city &&
+			!country
+		) {
+			return next(
+				errorHandler(400, "you need to update at least one field")
+			);
+		}
+
+		const updated = await User.findByIdAndUpdate(user._id, req.body, {
+			new: true,
+		}).lean();
+
+		return res.status(200).json({
+			success: true,
+			message: "patient profile updated",
+			data: updated,
 		});
 	} catch (error) {
 		return next(error);
