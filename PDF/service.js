@@ -1,7 +1,6 @@
 import pdf from "pdfkit";
 import fs from "fs";
-import path from "path";
-import { format } from "date-fns";
+import { format, differenceInYears } from "date-fns";
 
 class PDFService {
 	constructor() {
@@ -9,9 +8,11 @@ class PDFService {
 		this.contact = "Tel: 0123456789 | Email: medease@healthylife.com";
 		this.website = "www.medease.com";
 	}
-	async generateDiagnosisPDF(patient, diagnoses, option) {
+	async generateDiagnosisPDF(patient, diagnoses) {
 		const doc = new pdf({ margin: 50 });
-		const allDiagnoses = Array.isArray(diagnoses) ? diagnoses : [diagnoses];
+		const diagnosesArray = Array.isArray(diagnoses)
+			? diagnoses
+			: [diagnoses];
 
 		this._addHeader(doc);
 
@@ -141,8 +142,9 @@ class PDFService {
 			.text(`Name: ${patient.firstName} ${patient.lastName}`)
 			.text(`Patient ID: ${patient.patientId}`)
 			.text(
-				`Date of Birth: ${moment(patient.dateOfBirth).format(
-					"MMMM D, YYYY"
+				`Date of Birth: ${format(
+					new Date(patient.dateOfBirth),
+					"MMMM d, yyyy"
 				)} (${this._calculateAge(patient.dateOfBirth)} years)`
 			)
 			.text(`Gender: ${patient.gender}`)
@@ -153,63 +155,6 @@ class PDFService {
 		}
 	}
 
-	/**
-	 * Add billing items table to the invoice PDF
-	 * @param {PDFDocument} doc - The PDF document
-	 * @param {Array} items - Billing items
-	 * @private
-	 */
-	_addBillingTable(doc, items) {
-		const tableTop = doc.y;
-		const itemX = 50;
-		const descriptionX = 150;
-		const amountX = 400;
-
-		// Add table headers
-		doc.fontSize(11).font("Helvetica-Bold");
-		doc.text("Item", itemX, tableTop);
-		doc.text("Description", descriptionX, tableTop);
-		doc.text("Amount", amountX, tableTop);
-
-		doc.moveDown();
-		let currentY = doc.y;
-
-		// Add table lines
-		doc.strokeColor("#cccccc")
-			.lineWidth(1)
-			.moveTo(itemX, currentY - 15)
-			.lineTo(doc.page.width - 50, currentY - 15)
-			.stroke();
-
-		// Add items
-		doc.fontSize(10).font("Helvetica");
-
-		items.forEach((item) => {
-			currentY = doc.y;
-
-			doc.text(item.code || "N/A", itemX, currentY);
-			doc.text(item.description, descriptionX, currentY, { width: 200 });
-			doc.text(`$${item.amount.toFixed(2)}`, amountX, currentY);
-
-			doc.moveDown();
-		});
-
-		// Add bottom line
-		doc.strokeColor("#cccccc")
-			.lineWidth(1)
-			.moveTo(itemX, doc.y)
-			.lineTo(doc.page.width - 50, doc.y)
-			.stroke();
-
-		doc.moveDown();
-	}
-
-	/**
-	 * Add footer to PDF document
-	 * @param {PDFDocument} doc - The PDF document
-	 * @param {Object} options - Footer options
-	 * @private
-	 */
 	_addFooter(doc, options = {}) {
 		// Move to bottom of page
 		doc.fontSize(8).font("Helvetica");
@@ -226,7 +171,7 @@ class PDFService {
 
 		// Add page number and confidentiality notice
 		doc.text(
-			`Generated on ${moment().format("MMMM D, YYYY [at] h:mm A")}`,
+			`Generated on ${format(new Date(), "MMMM d, yyyy [at] h:mm a")}`,
 			50,
 			footerPosition,
 			{ align: "center" }
@@ -240,14 +185,8 @@ class PDFService {
 		);
 	}
 
-	/**
-	 * Calculate age from date of birth
-	 * @param {Date|String} dateOfBirth - Date of birth
-	 * @returns {Number} - Age in years
-	 * @private
-	 */
 	_calculateAge(dateOfBirth) {
-		return moment().diff(moment(dateOfBirth), "years");
+		return differenceInYears(new Date(), new Date(dateOfBirth));
 	}
 }
 const PDF = new PDFService();
