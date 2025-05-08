@@ -1,13 +1,22 @@
 import express from "express";
 import { errorHandler } from "../helpers/errorHandler.js";
 import isAuth from "../middlewares/auth.js";
+import User from "../models/userModel.js";
 
 const router = express.Router();
 
-router.get("/:id",isAuth ,async (req, res, next) => {
+router.get("/:id", isAuth, async (req, res, next) => {
 	try {
 		const { id } = req.params;
 		if (!id) return next(errorHandler(400, "missing patient ID"));
+
+		const user = req.user;
+		if (
+			Number(user._id) !== Number(id) &&
+			user.role !== "Hospital" &&
+			user.role !== "Admin"
+		)
+			return next(errorHandler(401, "Unauthorized operation"));
 
 		const patient = await User.findById(id, {
 			password: 0,
@@ -31,8 +40,12 @@ router.get("/:id",isAuth ,async (req, res, next) => {
 	}
 });
 
-router.get("/all",isAuth ,async (req, res, next) => {
+router.get("/all", isAuth, async (req, res, next) => {
 	try {
+		const user = req.user;
+		if (user.role !== "Admin" || user.role !== "Hospital")
+			return next(errorHandler(401, "Unauthorized operation"));
+
 		const patients = await User.find({ role: "Patient" }).select(
 			"-password -createdAt -updatedAt -rate -specialization -otp -otpExpiry"
 		);
