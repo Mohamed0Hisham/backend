@@ -131,6 +131,13 @@ router.put("/:id", isAuth, async (req, res, next) => {
 		const { id } = req.params;
 		if (!id) return next(errorHandler(400, "missing patient id"));
 
+		const user = req.user;
+		if (
+			user.role !== "Admin" &&
+			user.role !== "Hospital" &&
+			Number(id) !== Number(user.id)
+		)
+			return next(errorHandler(401, "unauthorized operation"));
 		const {
 			name,
 			gender,
@@ -175,9 +182,16 @@ router.put("/:id", isAuth, async (req, res, next) => {
 
 router.delete("/:id", isAuth, async (req, res, next) => {
 	try {
+		const user = req.user;
 		const { id } = req.params;
 		if (!id) return next(errorHandler(400, "missing patient id"));
 
+		if (
+			user.role !== "Admin" &&
+			user.role !== "Hospital" &&
+			Number(id) !== Number(user.id)
+		)
+			return next(errorHandler(401, "unauthorized operation"));
 		await User.findByIdAndDelete(id);
 		return res.status(200).json({
 			success: true,
