@@ -59,7 +59,7 @@ const userSchema = mongoose.Schema(
 			maxLength: [40, "Specialization MUST NOT exceed 40 characters"],
 		},
 		Appointment: {
-			type: [ mongoose.Schema.Types.ObjectId ],
+			type: [mongoose.Schema.Types.ObjectId],
 			ref: "Appointment",
 		},
 		otp: { type: String },
@@ -79,6 +79,29 @@ const userSchema = mongoose.Schema(
 			required: true,
 			min: 1,
 			max: 5,
+		},
+		emergencyContact: {
+			name: { type: String },
+			relationship: { type: String },
+			phone: { type: String },
+		},
+		insuranceInfo: {
+			provider: { type: String },
+			policyNumber: { type: String },
+			groupNumber: { type: String },
+			expirationDate: { type: Date },
+		},
+		medicalHistory: {
+			allergies: [String],
+			chronicConditions: [String],
+			surgeries: [
+				{
+					procedure: { type: String },
+					date: { type: Date },
+					notes: { type: String },
+				},
+			],
+			familyHistory: { type: String },
 		},
 	},
 	{
