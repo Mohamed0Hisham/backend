@@ -43,7 +43,7 @@ router.get("/:id", isAuth, async (req, res, next) => {
 router.get("/all", isAuth, async (req, res, next) => {
 	try {
 		const user = req.user;
-		if (user.role !== "Admin" || user.role !== "Hospital")
+		if (user.role !== "Admin" && user.role !== "Hospital")
 			return next(errorHandler(401, "Unauthorized operation"));
 
 		const patients = await User.find({ role: "Patient" }).select(
@@ -58,6 +58,58 @@ router.get("/all", isAuth, async (req, res, next) => {
 			success: true,
 			message: "Fetched all the patients in the database",
 			patients,
+		});
+	} catch (error) {
+		return next(error);
+	}
+});
+
+router.post("/new", async (req, res, next) => {
+	try {
+		const {
+			name,
+			gender,
+			email,
+			password,
+			phone,
+			city,
+			country,
+			emergencyContact,
+			familyHistory,
+		} = req.body;
+
+		if (
+			!name ||
+			!gender ||
+			!emergencyContact ||
+			!familyHistory ||
+			!email ||
+			!password ||
+			!phone ||
+			!city ||
+			!country
+		) {
+			return next(
+				errorHandler(400, "Please provide all the required fields")
+			);
+		}
+
+		await User.create({
+			name,
+			email,
+			password,
+			gender,
+			phone,
+			city,
+			country,
+			emergencyContact,
+			familyHistory,
+			role: "Patient",
+		});
+
+		return res.status(201).json({
+			success: true,
+			message: "added patient to database",
 		});
 	} catch (error) {
 		return next(error);
