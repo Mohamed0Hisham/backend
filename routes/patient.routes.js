@@ -2,6 +2,7 @@ import express from "express";
 import { errorHandler } from "../helpers/errorHandler.js";
 import isAuth from "../middlewares/auth.js";
 import User from "../models/userModel.js";
+import { hash } from "bcryptjs";
 
 const router = express.Router();
 
@@ -94,10 +95,17 @@ router.post("/new", async (req, res, next) => {
 			);
 		}
 
+		const isExist = await User.findOne({ email });
+		if (isExist) {
+			return next(errorHandler(400, "this email already in use"));
+		}
+
+		const hashedPass = await hash(password, 10);
+
 		await User.create({
 			name,
 			email,
-			password,
+			password: hashedPass,
 			gender,
 			phone,
 			city,
