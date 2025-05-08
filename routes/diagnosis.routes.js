@@ -1,6 +1,6 @@
 import express from "express";
-import { errorHandler } from "../helpers/errorHandler";
-import Diagnosis from "../models/diagnosis.model";
+import { errorHandler } from "../helpers/errorHandler.js";
+import Diagnosis from "../models/diagnosis.model.js";
 import isAuth from "../middlewares/auth.js";
 import User from "../models/userModel.js";
 
@@ -25,7 +25,11 @@ router.get("/:patientId/all", isAuth, async (req, res, next) => {
 			return next(errorHandler(404, "patient doesn't exist"));
 
 		const diagnoses = await Diagnosis.find({ patient: patientId })
-			.populate("doctor")
+			.populate({
+				path: "doctor",
+				select: "-password -createdAt -updatedAt -role -appoints -isVerified -__v",
+			})
+			.populate("medications")
 			.lean();
 		if (!diagnoses || diagnoses.length === 0)
 			return next(
@@ -61,8 +65,12 @@ router.get("/:patientId/:diagnosisId", isAuth, async (req, res, next) => {
 		if (!patient || patient.role !== "Patient")
 			return next(errorHandler(404, "patient doesn't exist"));
 
-		const diagnosis = await Diagnosis.findbyId(diagnosisId)
-			.populate("doctor")
+		const diagnosis = await Diagnosis.findById(diagnosisId)
+			.populate({
+				path: "doctor",
+				select: "-password -createdAt -updatedAt -role -appoints -isVerified -__v",
+			})
+			.populate("medications")
 			.lean();
 		if (!diagnosis)
 			return next(
@@ -207,7 +215,13 @@ router.put("/:patientId/:diagnosisId", isAuth, async (req, res, next) => {
 			{
 				new: true,
 			}
-		).lean();
+		)
+			.populate({
+				path: "doctor",
+				select: "-password -createdAt -updatedAt -role -appoints -isVerified -__v",
+			})
+			.populate("medications")
+			.lean();
 
 		return res.status(200).json({
 			success: true,

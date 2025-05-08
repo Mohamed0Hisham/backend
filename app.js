@@ -19,7 +19,8 @@ import doctorRouter from "./routes/doctor.routes.js";
 import messageRouter from "./routes/message.routes.js";
 import conversationRouter from "./routes/conversation.router.js";
 import pdfRouter from "./routes/pdf.routes.js";
-import patientRouter from "./routes/patient.routes.js"
+import patientRouter from "./routes/patient.routes.js";
+import diagnosisRouter from "./routes/diagnosis.routes.js";
 dotenv.config();
 
 configDotenv();
@@ -58,7 +59,8 @@ app.use("/api/doctor", doctorRouter);
 app.use("/api/message", messageRouter);
 app.use("/api/conversation", conversationRouter);
 app.use("/api/file", pdfRouter);
-app.use("/api/patient", patientRouter)
+app.use("/api/patient", patientRouter);
+app.use("/api/diagnosis", diagnosisRouter);
 
 app.get("*", (req, res) => {
 	return res.status(404).json({
@@ -72,7 +74,7 @@ app.use((err, req, res, next) => {
 	const message = err.message || "Internal Server Error";
 	return res.status(statusCode).json({
 		success: false,
-		code:statusCode,
+		code: statusCode,
 		message,
 	});
 });
