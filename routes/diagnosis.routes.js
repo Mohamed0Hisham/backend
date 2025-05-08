@@ -156,4 +156,67 @@ router.post("/", isAuth, async (req, res, next) => {
 	}
 });
 
+router.put("/:patientId/:diagnosisId", isAuth, async (req, res, next) => {
+	try {
+		const { patientId, diagnosisId } = req.params;
+		if (!patientId || !diagnosisId)
+			return next(errorHandler(400, "missing patient or diagnosis ID"));
+
+		const user = req.user;
+		if (
+			user.role !== "Admin" &&
+			user.role !== "Doctor" &&
+			user.role !== "Hospital"
+		)
+			return next(errorHandler(401, "unauthorized operation"));
+
+		const diagnosis = await Diagnosis.findById(diagnosisId).lean();
+		if (!diagnosis)
+			return next(errorHandler(404, "Diagnosis doesn't exist"));
+
+		const patient = await User.findById(patientId).lean();
+		if (!patient || patient.role !== "Patient")
+			return next(errorHandler(404, "patient doesn't exist"));
+
+		const {
+			title,
+			description,
+			symptoms,
+			medications,
+			recommendations,
+			followUp,
+			notes,
+		} = req.body;
+
+		if (
+			!title &&
+			!description &&
+			!symptoms &&
+			!medications &&
+			!recommendations &&
+			!followUp &&
+			!notes
+		)
+			return next(
+				errorHandler(400, "at least one field should be updated")
+			);
+
+		const updated = await Diagnosis.findByIdAndUpdate(
+			diagnosisId,
+			req.body,
+			{
+				new: true,
+			}
+		).lean();
+
+		return res.status(200).json({
+			success: true,
+			message: "Diagnosis updated",
+			Diagnosis: updated,
+		});
+	} catch (error) {
+		return next(error);
+	}
+});
+
 export default router;
