@@ -15,12 +15,13 @@ import treatmentRouter from "./routes/treatmnet.routes.js";
 import advertisementtRouter from "./routes/advertisement.routes.js";
 import ratingtRouter from "./routes/rating.routes.js";
 import oauthRouter from "./routes/oauth.routes.js";
+import doctorRouter from "./routes/doctor.routes.js"
+
 import messageRouter from "./routes/message.routes.js"
 import conversationRouter from "./routes/conversation.router.js"
 dotenv.config();
 
 configDotenv();
-// starting the server
 const app = express();
 // const Limter = rateLimter({
 // 	windowMs: 1000 * 60 * 15,
@@ -40,7 +41,6 @@ app.use(cors({ origin: "http://localhost:5173" }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
-// app.use(Limter);
 
 //APIs goes here
 app.use("/api/users", userRouter);
@@ -53,6 +53,7 @@ app.use("/api/advertisements", advertisementtRouter);
 app.use("/api/rate", ratingtRouter);
 app.use("/auth", oauthRouter);
 app.use("/api/otp", otpRouter);
+app.use("/api/doctor", doctorRouter)
 app.use ("/api/message",messageRouter);
 app.use("/api/conversation",conversationRouter)
 
