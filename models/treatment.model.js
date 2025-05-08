@@ -21,6 +21,7 @@ const treatmentSchema = mongoose.Schema(
 			maxLength: [500, "Description MUST NOT exceed 500 characters"],
 		},
 		dosage: { type: String, required: true },
+		instructions: { type: String, required: true },
 		quantity: { type: String },
 		refills: { type: Number, default: 0 },
 		notes: { type: String },

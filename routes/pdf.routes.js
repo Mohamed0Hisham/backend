@@ -50,7 +50,7 @@ router.get("/diagnosis/:patientId/:diagnosisId", async (req, res, next) => {
 		if (!patient || patient.role !== "Patient")
 			return next(errorHandler(404, "patient doesn't exist"));
 
-		const diagnosis = await Diagnosis.findbyId(diagnosisId).populate(
+		const diagnosis = await Diagnosis.findById(diagnosisId).populate(
 			"doctor"
 		);
 		if (!diagnosis)
