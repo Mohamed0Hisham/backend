@@ -250,3 +250,5 @@ class PDFService {
 		return moment().diff(moment(dateOfBirth), "years");
 	}
 }
+const PDF = new PDFService();
+export default PDF;
