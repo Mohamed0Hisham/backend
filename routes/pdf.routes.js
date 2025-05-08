@@ -16,9 +16,13 @@ router.get("/diagnosis/:patientId/all", async (req, res, next) => {
 		if (!patient || patient.role !== "Patient")
 			return next(errorHandler(404, "patient doesn't exist"));
 
-		const diagnoses = await Diagnosis.find({ patient: patientId }).populate(
-			"doctor"
-		);
+		const diagnoses = await Diagnosis.find({ patient: patientId })
+			.populate({
+				path: "doctor",
+				select: "-password -createdAt -updatedAt -role -appoints -isVerified -__v",
+			})
+			.populate("medications")
+			.lean();
 		if (!diagnoses || diagnoses.length === 0)
 			return next(
 				errorHandler(404, "No diagnoses found for this patient")

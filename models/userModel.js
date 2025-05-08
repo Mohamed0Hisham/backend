@@ -90,6 +90,16 @@ const userSchema = mongoose.Schema(
 			groupNumber: { type: String },
 			expirationDate: { type: Date },
 		},
+		dateOfBirth: { 
+			type: Date, 
+			required: [true, "Date of birth is required"], 
+			validate: {
+				validator: function(value) {
+					return value < new Date();
+				},
+				message: "Date of birth must be in the past",
+			},
+		},
 		medicalHistory: {
 			allergies: [String],
 			chronicConditions: [String],

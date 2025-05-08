@@ -14,8 +14,8 @@ router.get("/one/:id", isAuth, async (req, res, next) => {
 		if (!id) return next(errorHandler(400, "missing patient ID"));
 
 		const user = req.user;
-		console.log(typeof user._id)
-		console.log(typeof id)
+		console.log(typeof user._id);
+		console.log(typeof id);
 		if (
 			user._id !== id &&
 			user.role !== "Hospital" &&
@@ -31,7 +31,7 @@ router.get("/one/:id", isAuth, async (req, res, next) => {
 			specialization: 0,
 			otp: 0,
 			otpExpiry: 0,
-			isVerified:0
+			isVerified: 0,
 		}).lean();
 		if (!patient || patient.role !== "Patient")
 			return next(errorHandler(404, "patient doesn't exist at database"));
@@ -78,19 +78,19 @@ router.post("/", async (req, res, next) => {
 			name,
 			gender,
 			email,
+			dateOfBirth,
 			password,
 			phone,
 			city,
 			country,
 			emergencyContact,
-			familyHistory,
 		} = req.body;
 
 		if (
 			!name ||
 			!gender ||
+			!dateOfBirth ||
 			!emergencyContact ||
-			!familyHistory ||
 			!email ||
 			!password ||
 			!phone ||
@@ -102,18 +102,12 @@ router.post("/", async (req, res, next) => {
 			);
 		}
 
-		const isExist = await User.findOne({ email });
+		const isExist = await User.findOne({ email }).lean();
 		if (isExist) {
 			return next(errorHandler(400, "this email already in use"));
 		}
 
 		const hashedPass = await bcrypt.hash(password, 10);
-
-		const token = jwt.sign({ email: email }, process.env.JWT_SECRET, {
-			expiresIn: "24h",
-		});
-
-		await emailService.confirmEmail(email, token);
 
 		await User.create({
 			name,
@@ -122,11 +116,16 @@ router.post("/", async (req, res, next) => {
 			gender,
 			phone,
 			city,
+			dateOfBirth,
 			country,
 			emergencyContact,
-			familyHistory,
 			role: "Patient",
 		});
+
+		const token = jwt.sign({ email: email }, process.env.JWT_SECRET, {
+			expiresIn: "24h",
+		});
+		await emailService.confirmEmail(email, token);
 
 		return res.status(201).json({
 			success: true,

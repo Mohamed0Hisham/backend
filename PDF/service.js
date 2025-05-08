@@ -27,9 +27,12 @@ class PDFService {
 		doc.fontSize(14).font("Helvetica-Bold").text("DIAGNOSIS INFORMATION");
 		doc.moveDown(0.5);
 
+		console.log(diagnosesArray)
 		diagnosesArray.forEach((diagnosis, index) => {
 			if (index > 0) doc.moveDown(0.5);
 
+			console.log(diagnosis.date)
+			console.log(diagnosis.doctor.name)
 			doc.fontSize(11)
 				.font("Helvetica-Bold")
 				.text(
@@ -129,18 +132,12 @@ class PDFService {
 		doc.moveDown();
 	}
 
-	/**
-	 * Add patient information to PDF document
-	 * @param {PDFDocument} doc - The PDF document
-	 * @param {Object} patient - Patient information
-	 * @private
-	 */
 	_addPatientInfo(doc, patient) {
 		doc.fontSize(12).font("Helvetica-Bold").text("PATIENT INFORMATION");
 		doc.fontSize(11)
 			.font("Helvetica")
-			.text(`Name: ${patient.firstName} ${patient.lastName}`)
-			.text(`Patient ID: ${patient.patientId}`)
+			.text(`Name: ${patient.name} `)
+			.text(`Patient ID: ${patient._id}`)
 			.text(
 				`Date of Birth: ${format(
 					new Date(patient.dateOfBirth),
@@ -150,8 +147,8 @@ class PDFService {
 			.text(`Gender: ${patient.gender}`)
 			.text(`Contact: ${patient.phone} | ${patient.email || "N/A"}`);
 
-		if (patient.address) {
-			doc.text(`Address: ${patient.address}`);
+		if (patient.city) {
+			doc.text(`Address: ${patient.city}-${patient.country}`);
 		}
 	}
 
