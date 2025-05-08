@@ -77,4 +77,73 @@ router.get("/:patientId/:diagnosisId", isAuth, async (req, res, next) => {
 	}
 });
 
+router.post("/", async (req, res, next) => {
+	try {
+		const {
+			patientId,
+			doctorId,
+			title,
+			description,
+			symptoms,
+			medications,
+			recommendations,
+			followUp,
+			notes,
+		} = req.body;
+
+		if (
+			!patientId ||
+			!doctorId ||
+			!title ||
+			!description ||
+			!symptoms ||
+			!medications ||
+			!recommendations ||
+			!followUp ||
+			!notes
+		)
+			return next(errorHandler(400, "missing required fields"));
+
+		if (!Array.isArray(medications))
+			return next(
+				errorHandler(
+					400,
+					"provide medications as an array of IDs refrencing treatments collection"
+				)
+			);
+		if (!Array.isArray(symptoms))
+			return next(
+				errorHandler(400, "provide symptoms as an array of strings")
+			);
+
+		const patient = await User.findById(patientId);
+		if (!patient || patient.role !== "Patient")
+			return next(errorHandler(404, "patient doesn't exist"));
+
+		const doctor = await User.findById(doctorId);
+		if (!doctor || doctor.role !== "Doctor")
+			return next(errorHandler(404, "doctor doesn't exist"));
+
+		const diagnosis = await Diagnosis.create({
+			patient: patientId,
+			doctor: doctorId,
+			title,
+			description,
+			symptoms,
+			medications,
+			recommendations,
+			followUp,
+			notes,
+		});
+
+		return res.status(201).json({
+			success: true,
+			message: "new diagnosis added to the patient",
+			diagnosis,
+		});
+	} catch (error) {
+		return next(error);
+	}
+});
+
 export default router;
