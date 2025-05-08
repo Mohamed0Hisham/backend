@@ -2,18 +2,22 @@ import express from "express";
 import { errorHandler } from "../helpers/errorHandler.js";
 import isAuth from "../middlewares/auth.js";
 import User from "../models/userModel.js";
-import { hash } from "bcryptjs";
+import bcrypt from "bcryptjs";
+import emailService from "../Mail/emailService.js";
+import jwt from "jsonwebtoken";
 
 const router = express.Router();
 
-router.get("/:id", isAuth, async (req, res, next) => {
+router.get("/one/:id", isAuth, async (req, res, next) => {
 	try {
 		const { id } = req.params;
 		if (!id) return next(errorHandler(400, "missing patient ID"));
 
 		const user = req.user;
+		console.log(typeof user._id)
+		console.log(typeof id)
 		if (
-			Number(user._id) !== Number(id) &&
+			user._id !== id &&
 			user.role !== "Hospital" &&
 			user.role !== "Admin"
 		)
@@ -27,6 +31,7 @@ router.get("/:id", isAuth, async (req, res, next) => {
 			specialization: 0,
 			otp: 0,
 			otpExpiry: 0,
+			isVerified:0
 		}).lean();
 		if (!patient || patient.role !== "Patient")
 			return next(errorHandler(404, "patient doesn't exist at database"));
@@ -102,7 +107,13 @@ router.post("/", async (req, res, next) => {
 			return next(errorHandler(400, "this email already in use"));
 		}
 
-		const hashedPass = await hash(password, 10);
+		const hashedPass = await bcrypt.hash(password, 10);
+
+		const token = jwt.sign({ email: email }, process.env.JWT_SECRET, {
+			expiresIn: "24h",
+		});
+
+		await emailService.confirmEmail(email, token);
 
 		await User.create({
 			name,
@@ -119,7 +130,7 @@ router.post("/", async (req, res, next) => {
 
 		return res.status(201).json({
 			success: true,
-			message: "added patient to database",
+			message: "confirmation email has been sent to your email",
 		});
 	} catch (error) {
 		return next(error);
