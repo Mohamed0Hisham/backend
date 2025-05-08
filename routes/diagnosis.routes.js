@@ -14,6 +14,7 @@ router.get("/:patientId/all", isAuth, async (req, res, next) => {
 		const user = req.user;
 		if (
 			user.role !== "Admin" &&
+			user.role !== "Doctor" &&
 			user.role !== "Hospital" &&
 			Number(patientId) !== Number(user.id)
 		)
@@ -50,6 +51,7 @@ router.get("/:patientId/:diagnosisId", isAuth, async (req, res, next) => {
 		const user = req.user;
 		if (
 			user.role !== "Admin" &&
+			user.role !== "Doctor" &&
 			user.role !== "Hospital" &&
 			Number(patientId) !== Number(user.id)
 		)
@@ -77,8 +79,16 @@ router.get("/:patientId/:diagnosisId", isAuth, async (req, res, next) => {
 	}
 });
 
-router.post("/", async (req, res, next) => {
+router.post("/", isAuth, async (req, res, next) => {
 	try {
+		const user = req.user;
+		if (
+			user.role !== "Admin" &&
+			user.role !== "Doctor" &&
+			user.role !== "Hospital"
+		)
+			return next(errorHandler(401, "unauthorized operation"));
+
 		const {
 			patientId,
 			doctorId,
