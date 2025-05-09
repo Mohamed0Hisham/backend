@@ -196,7 +196,7 @@ export const DoctorNames = async (req, res, next) => {
 					ImgUrl: 1,
 					specialization: 1,
 					rate: 1,
-					_id: 0,
+					_id: 1,
 				}
 			)
 			.lean();
@@ -212,7 +212,6 @@ export const DoctorNames = async (req, res, next) => {
 		return next(
 			errorHandler(
 				500,
-				500,
 				"An error occurred while updating the Disease. Please try again later." +
 					error
 			)
@@ -220,35 +219,119 @@ export const DoctorNames = async (req, res, next) => {
 	}
 };
 
-export const destroy = async (req, res, next) => {
-	const role = req.user.role;
-	const UserId = req.params.id;
-	if (!mongoose.Types.ObjectId.isValid(id)) {
-		return next(errorHandler(400, "Invalid Advertisment ID"));
-	}
-	if (UserId == null) {
-		return next(errorHandler(400, "All required fields must be provided."));
-	}
-	if (role != "Admin") {
-		return next(errorHandler(403, "You are Unauthorized to do this action"));
-	}
+// export const destroy = async (req, res, next) => {
+// 	const role = req.user.role;
+// 	const UserId = req.params.id;
+// 	if (!mongoose.Types.ObjectId.isValid(id)) {
+// 		return next(errorHandler(400, "Invalid Advertisment ID"));
+// 	}
+// 	if (UserId == null) {
+// 		return next(errorHandler(400, "All required fields must be provided."));
+// 	}
+// 	if (role != "Admin") {
+// 		return next(errorHandler(403, "You are Unauthorized to do this action"));
+// 	}
+// 	try {
+// 		const user = await userModel.findById(UserId);
+// 		if (!user) {
+// 			return res.status(404).json({ message: "User not found" });
+// 		}
+// 		await userModel.findOneAndDelete({ _id: UserId });
+// 		return res.status(204).json({
+// 			msg: "The User has been successfully deleted",
+// 			success: true,
+// 		});
+// 	} catch (error) {
+// 		return next(
+// 			errorHandler(
+// 				500,
+// 				"An error occurred while deleting the User. Please try again later." +
+// 					error
+// 			)
+// 		);
+// 	}
+// };
+export const deleteAccount = async (req, res, next) => {
+	const userId = req.user._id;
+
 	try {
-		const user = await userModel.findById(UserId);
-		if (!user) {
-			return res.status(404).json({ message: "User not found" });
+		if (!userId) {
+			return next(errorHandler(401, "Unauthorized: User ID not found"));
 		}
-		await userModel.findOneAndDelete({ _id: UserId });
-		return res.status(204).json({
-			msg: "The User has been successfully deleted",
+
+		if (!mongoose.Types.ObjectId.isValid(userId)) {
+			return next(errorHandler(400, "Invalid User ID"));
+		}
+
+		const user = await userModel.findById(userId);
+		if (!user) {
+			return next(errorHandler(404, "User not found"));
+		}
+
+		// Delete user's profile image if it exists and is not the default image
+		if (user.ImgPublicId && user.ImgPublicId !== process.env.USER_DEFAULT_IMAGE_PUBLICID) {
+			await deleteImg(user.ImgPublicId);
+		}
+
+		await userModel.deleteOne({ _id: userId });
+		return res.status(200).json({
 			success: true,
+			message: "Account deleted successfully",
 		});
+
 	} catch (error) {
-		return next(
-			errorHandler(
-				500,
-				"An error occurred while deleting the User. Please try again later." +
-					error
-			)
-		);
+		return next(errorHandler(500, "Error deleting account: " + error.message));
+	}
+};
+
+export const changeUserRole = async (req, res, next) => {
+	const adminId = req.user._id;
+	const targetUserId = req.params.userId;
+	const { newRole } = req.body;
+
+	try {
+		// Check if the requester is an admin
+		const admin = await userModel.findById(adminId);
+		if (!admin || admin.role !== "Admin") {
+			return next(errorHandler(403, "Only administrators can change user roles"));
+		}
+
+		// Validate the target user ID
+		if (!mongoose.Types.ObjectId.isValid(targetUserId)) {
+			return next(errorHandler(400, "Invalid user ID"));
+		}
+
+		// Validate the new role
+		const validRoles = ["Admin", "Patient", "Doctor", "Nurse", "Hospital"];
+		if (!validRoles.includes(newRole)) {
+			return next(errorHandler(400, "Invalid role."));
+		}
+
+		// Find and update the user
+		const user = await userModel.findById(targetUserId);
+		if (!user) {
+			return next(errorHandler(404, "User not found"));
+		}
+
+		// Prevent changing the last admin's role
+		if (user.role === "Admin" && newRole !== "Admin") {
+			const adminCount = await userModel.countDocuments({ role: "Admin" });
+			if (adminCount <= 1) {
+				return next(errorHandler(400, "Cannot change the last admin's role"));
+			}
+		}
+
+		// Update the user's role
+		user.role = newRole;
+		await user.save();
+
+		return res.status(200).json({
+			success: true,
+			message: "User role updated successfully",
+			
+		});
+
+	} catch (error) {
+		return next(errorHandler(500, "Error updating user role: " + error.message));
 	}
 };

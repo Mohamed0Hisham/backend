@@ -35,6 +35,7 @@ const userSchema = mongoose.Schema(
 		},
 		phone: {
 			type: String,
+			unique: [true, "This phone already exists"],
 			required: [true, "Phone number is required"],
 			maxLength: [20, "Phone number MUST NOT exceed 20 characters"],
 		},
@@ -50,7 +51,6 @@ const userSchema = mongoose.Schema(
 		},
 		role: {
 			type: String,
-			required: [true, "Role is required"],
 			enum: ["Admin", "Patient", "Doctor", "Nurse", "Hospital"],
 			default: "Patient",
 		},
