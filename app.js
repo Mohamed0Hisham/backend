@@ -15,10 +15,12 @@ import treatmentRouter from "./routes/treatmnet.routes.js";
 import advertisementtRouter from "./routes/advertisement.routes.js";
 import ratingtRouter from "./routes/rating.routes.js";
 import oauthRouter from "./routes/oauth.routes.js";
-import doctorRouter from "./routes/doctor.routes.js"
-
-import messageRouter from "./routes/message.routes.js"
-import conversationRouter from "./routes/conversation.router.js"
+import doctorRouter from "./routes/doctor.routes.js";
+import messageRouter from "./routes/message.routes.js";
+import conversationRouter from "./routes/conversation.router.js";
+import pdfRouter from "./routes/pdf.routes.js";
+import patientRouter from "./routes/patient.routes.js";
+import diagnosisRouter from "./routes/diagnosis.routes.js";
 dotenv.config();
 
 configDotenv();
@@ -37,7 +39,7 @@ const app = express();
 // 		credentials: true, // Allow cookies (if needed)
 // 	})
 // );
-app.use(cors({ origin: "http://localhost:5173" }));
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
@@ -53,9 +55,12 @@ app.use("/api/advertisements", advertisementtRouter);
 app.use("/api/rate", ratingtRouter);
 app.use("/auth", oauthRouter);
 app.use("/api/otp", otpRouter);
-app.use("/api/doctor", doctorRouter)
-app.use ("/api/message",messageRouter);
-app.use("/api/conversation",conversationRouter)
+app.use("/api/doctor", doctorRouter);
+app.use("/api/message", messageRouter);
+app.use("/api/conversation", conversationRouter);
+app.use("/api/file", pdfRouter);
+app.use("/api/patient", patientRouter);
+app.use("/api/diagnosis", diagnosisRouter);
 
 app.get("*", (req, res) => {
 	return res.status(404).json({
@@ -69,7 +74,7 @@ app.use((err, req, res, next) => {
 	const message = err.message || "Internal Server Error";
 	return res.status(statusCode).json({
 		success: false,
-		statusCode,
+		code: statusCode,
 		message,
 	});
 });

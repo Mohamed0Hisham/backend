@@ -35,6 +35,7 @@ const userSchema = mongoose.Schema(
 		},
 		phone: {
 			type: String,
+			unique: [true, "This phone already exists"],
 			required: [true, "Phone number is required"],
 			maxLength: [20, "Phone number MUST NOT exceed 20 characters"],
 		},
@@ -50,7 +51,6 @@ const userSchema = mongoose.Schema(
 		},
 		role: {
 			type: String,
-			required: [true, "Role is required"],
 			enum: ["Admin", "Patient", "Doctor", "Nurse", "Hospital"],
 			default: "Patient",
 		},
@@ -59,7 +59,7 @@ const userSchema = mongoose.Schema(
 			maxLength: [40, "Specialization MUST NOT exceed 40 characters"],
 		},
 		Appointment: {
-			type: [ mongoose.Schema.Types.ObjectId ],
+			type: [mongoose.Schema.Types.ObjectId],
 			ref: "Appointment",
 		},
 		otp: { type: String },
@@ -76,9 +76,41 @@ const userSchema = mongoose.Schema(
 		},
 		rate: {
 			type: Number,
-			required: true,
 			min: 1,
 			max: 5,
+		},
+		emergencyContact: {
+			name: { type: String },
+			relationship: { type: String },
+			phone: { type: String },
+		},
+		insuranceInfo: {
+			provider: { type: String },
+			policyNumber: { type: String },
+			groupNumber: { type: String },
+			expirationDate: { type: Date },
+		},
+		dateOfBirth: { 
+			type: Date, 
+			required: [true, "Date of birth is required"], 
+			validate: {
+				validator: function(value) {
+					return value < new Date();
+				},
+				message: "Date of birth must be in the past",
+			},
+		},
+		medicalHistory: {
+			allergies: [String],
+			chronicConditions: [String],
+			surgeries: [
+				{
+					procedure: { type: String },
+					date: { type: Date },
+					notes: { type: String },
+				},
+			],
+			familyHistory: { type: String },
 		},
 	},
 	{
@@ -88,4 +120,5 @@ const userSchema = mongoose.Schema(
 userSchema.methods.comparePassword = async function (password) {
 	return bcrypt.compare(password, this.password);
 };
-export default mongoose.model("User", userSchema);
+const User = mongoose.model("User", userSchema);
+export default User;
