@@ -4,25 +4,43 @@ import mongoose from "mongoose";
 
 export const index = async (req, res, next) => {
 	try {
-		const Treatments = await TREATMENT.find();
-		if (Treatments.length === 0) {
-			return next(errorHandler(204, "There aren't any Treatments"));
+		// Parse pagination parameters or set defaults
+		const page = parseInt(req.query.page) || 1;
+		const limit = parseInt(req.query.limit) || 10;
+		const skip = (page - 1) * limit;
+
+		// Fetch treatments with pagination
+		const treatments = await TREATMENT.find()
+			.skip(skip)
+			.limit(limit)
+			.lean();
+
+		if (treatments.length === 0) {
+			return next(errorHandler(204, "There aren't any Treatments")); // No content for empty page
 		}
+
+		const totalTreatments = await TREATMENT.countDocuments();
+		const totalPages = Math.ceil(totalTreatments / limit);
+
 		return res.status(200).json({
-			data: Treatments,
+			data: treatments,
 			msg: "All Treatments are retrieved",
 			success: true,
+			totalTreatments: totalTreatments,
+			totalPages: totalPages,
+			currentPage: page,
 		});
 	} catch (error) {
 		return next(
 			errorHandler(
 				500,
-				"An error occurred while retrieving the Treatment. Please try again later." +
+				"An error occurred while retrieving the Treatments. Please try again later. " +
 					error
 			)
 		);
 	}
 };
+
 export const show = async (req, res, next) => {
 	try {
 		const id = req.params.id;
