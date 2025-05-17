@@ -7,6 +7,7 @@ import emailService from "../Mail/emailService.js";
 import { uploadImg, deleteImg } from "../helpers/images.js";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
+import { generateToken } from "../middlewares/auth.js";
 
 dotenv.config();
 
@@ -59,12 +60,14 @@ export const register = async (req, res, next) => {
 		});
 
 		const user = await newUser.save();
-		if (user) {
-			await emailService.confirmEmail(email, token);
-			return res
-				.status(201)
-				.json({ message: "confirmation email has been sent" });
+		if (!user) {
+			return res.status(500).json({ message: "User creation failed" });
 		}
+
+		await emailService.confirmEmail(email, token);
+		return res
+			.status(201)
+			.json({ message: "confirmation email has been sent" });
 	} catch (error) {
 		console.error(error.stack);
 		res.status(500).json({
@@ -95,29 +98,21 @@ export const login = async (req, res) => {
 				.status(401)
 				.json({ message: "Invalid email or password" });
 		}
+		const token = generateToken(user);
+		if (!token)
+			return res
+				.status(500)
+				.json({ success: false, message: "failed to generate token" });
 
-		jwt.sign(
-			{ _id: user._id, name: user.name, role: user.role },
-			process.env.JWT_SECRET,
-			{ expiresIn: "4h" },
-			(error, token) => {
-				if (error) {
-					console.error("Error signing token:", error);
-					return res
-						.status(500)
-						.json({ message: "Internal server error" });
-				}
-
-				res.header("token", token, { httpOnly: true })
-					.status(200)
-					.json({
-						token,
-					});
-			}
-		);
+		res.header("token", token);
+		return res.status(200).json({
+			token,
+		});
 	} catch (error) {
 		console.error(error);
-		res.status(500).json({ message: "An error occurred while logging in" });
+		return res
+			.status(500)
+			.json({ message: "An error occurred while logging in" });
 	}
 };
 export const logout = async (req, res) => {
@@ -138,7 +133,7 @@ export const logout = async (req, res) => {
 export const index = async (req, res, next) => {
 	try {
 		if (req.user.role != "Admin") {
-			res.status(403).json({
+			return res.status(403).json({
 				message: "This Action is forbidden",
 			});
 		}
