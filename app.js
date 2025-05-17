@@ -44,7 +44,7 @@ app.use(
 		origin: (origin, callback) => {
 			callback(null, origin || "*");
 		},
-		methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+		methods: ["GET", "POST", "PUT", "PATCH" ,"DELETE", "OPTIONS"],
 		allowedHeaders: ["Content-Type", "Authorization"],
 	})
 );

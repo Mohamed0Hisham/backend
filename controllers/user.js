@@ -10,7 +10,7 @@ import mongoose from "mongoose";
 
 dotenv.config();
 
-export const register = async (req, res) => {
+export const register = async (req, res, next) => {
 	try {
 		const {
 			name,
