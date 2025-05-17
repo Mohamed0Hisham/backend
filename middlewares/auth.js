@@ -18,7 +18,6 @@ const authenticateJWT = (req, res, next) => {
 			.json({ message: "Token is invalid, please log in again" });
 	}
 
-	console.log(token);
 	jwt.verify(token, process.env.JWT_SECRET, (err, decodedToken) => {
 		if (err) {
 			return res.status(403).json({ message: "Invalid token" });

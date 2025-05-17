@@ -51,6 +51,15 @@ export const register = async (req, res, next) => {
 				.json({ message: "This email already exists" });
 		}
 
+		if (req.body.role) {
+			return next(
+				errorHandler(
+					401,
+					"Unauthorized operation, you can't set role for yourself"
+				)
+			);
+		}
+
 		const newUser = new userModel(req.body);
 		const hashedPassword = await bcrypt.hash(req.body.password, 10);
 		newUser.password = hashedPassword;
@@ -70,7 +79,7 @@ export const register = async (req, res, next) => {
 			.json({ message: "confirmation email has been sent" });
 	} catch (error) {
 		console.error(error.stack);
-		res.status(500).json({
+		return res.status(500).json({
 			message:
 				"An error occurred while registering the user " + error.message,
 		});
