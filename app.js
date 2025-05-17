@@ -44,7 +44,7 @@ app.use(
 		origin: (origin, callback) => {
 			callback(null, origin || "*");
 		},
-		methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+		methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
 		allowedHeaders: ["Content-Type", "Authorization"],
 	})
 );
@@ -78,6 +78,10 @@ app.get("*", (req, res) => {
 
 //Error handler route
 app.use((err, req, res, next) => {
+	if (res.headersSent) {
+		return;
+	}
+
 	const statusCode = err.statusCode || 500;
 	const message = err.message || "Internal Server Error";
 	return res.status(statusCode).json({
