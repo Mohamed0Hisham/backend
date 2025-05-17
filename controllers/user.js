@@ -12,10 +12,42 @@ dotenv.config();
 
 export const register = async (req, res) => {
 	try {
-		const { email } = req.body;
+		const {
+			name,
+			gender,
+			email,
+			password,
+			phone,
+			city,
+			country,
+			dateOfBirth,
+		} = req.body;
+
+		const missingFields = [];
+
+		if (!name) missingFields.push("name");
+		if (!gender) missingFields.push("gender");
+		if (!email) missingFields.push("email");
+		if (!password) missingFields.push("password");
+		if (!phone) missingFields.push("phone");
+		if (!city) missingFields.push("city");
+		if (!country) missingFields.push("country");
+		if (!dateOfBirth) missingFields.push("dateOfBirth");
+
+		if (missingFields.length > 0) {
+			return next(
+				errorHandler(
+					400,
+					`Missing required fields: ${missingFields.join(", ")}`
+				)
+			);
+		}
+
 		const existingUser = await userModel.findOne({ email });
 		if (existingUser) {
-			return res.status(409).json({ message: "This email already exists" });
+			return res
+				.status(409)
+				.json({ message: "This email already exists" });
 		}
 
 		const newUser = new userModel(req.body);
@@ -26,14 +58,18 @@ export const register = async (req, res) => {
 			expiresIn: "24h",
 		});
 
-		await emailService.confirmEmail(email, token);
-		await newUser.save();
-
-		res.status(201).json({ message: "confirmation email has been sent" });
+		const user = await newUser.save();
+		if (user) {
+			await emailService.confirmEmail(email, token);
+			return res
+				.status(201)
+				.json({ message: "confirmation email has been sent" });
+		}
 	} catch (error) {
-		console.error(error); // Log the error for debugging
+		console.error(error.stack);
 		res.status(500).json({
-			message: "An error occurred while registering the user " + error,
+			message:
+				"An error occurred while registering the user " + error.message,
 		});
 	}
 };
@@ -42,7 +78,9 @@ export const login = async (req, res) => {
 	try {
 		const user = await userModel.findOne({ email: req.body.email });
 		if (!user) {
-			return res.status(401).json({ message: "Invalid email or password" });
+			return res
+				.status(401)
+				.json({ message: "Invalid email or password" });
 		}
 
 		if (!user.isVerified) {
@@ -53,7 +91,9 @@ export const login = async (req, res) => {
 
 		const passwordCheck = await user.comparePassword(req.body.password);
 		if (!passwordCheck) {
-			return res.status(401).json({ message: "Invalid email or password" });
+			return res
+				.status(401)
+				.json({ message: "Invalid email or password" });
 		}
 
 		jwt.sign(
@@ -63,12 +103,16 @@ export const login = async (req, res) => {
 			(error, token) => {
 				if (error) {
 					console.error("Error signing token:", error);
-					return res.status(500).json({ message: "Internal server error" });
+					return res
+						.status(500)
+						.json({ message: "Internal server error" });
 				}
 
-				res.header("token", token, { httpOnly: true }).status(200).json({
-					token,
-				});
+				res.header("token", token, { httpOnly: true })
+					.status(200)
+					.json({
+						token,
+					});
 			}
 		);
 	} catch (error) {
@@ -151,14 +195,19 @@ export const update = async (req, res, next) => {
 			try {
 				const image = await uploadImg(req.file);
 				// check whether the user's image is the default or not, if not the default we delete it
-				if (user.ImgPublicId != process.env.USER_DEFAULT_IMAGE_PUBLICID) {
+				if (
+					user.ImgPublicId != process.env.USER_DEFAULT_IMAGE_PUBLICID
+				) {
 					await deleteImg(user.ImgPublicId);
 				}
 				result.ImgPublicId = image.ImgPublicId;
 				result.ImgUrl = image.ImgUrl;
 			} catch (error) {
 				return next(
-					errorHandler(500, "Error while Upload or delete picture" + error)
+					errorHandler(
+						500,
+						"Error while Upload or delete picture" + error
+					)
 				);
 			}
 		}
@@ -269,7 +318,10 @@ export const deleteAccount = async (req, res, next) => {
 		}
 
 		// Delete user's profile image if it exists and is not the default image
-		if (user.ImgPublicId && user.ImgPublicId !== process.env.USER_DEFAULT_IMAGE_PUBLICID) {
+		if (
+			user.ImgPublicId &&
+			user.ImgPublicId !== process.env.USER_DEFAULT_IMAGE_PUBLICID
+		) {
 			await deleteImg(user.ImgPublicId);
 		}
 
@@ -278,9 +330,10 @@ export const deleteAccount = async (req, res, next) => {
 			success: true,
 			message: "Account deleted successfully",
 		});
-
 	} catch (error) {
-		return next(errorHandler(500, "Error deleting account: " + error.message));
+		return next(
+			errorHandler(500, "Error deleting account: " + error.message)
+		);
 	}
 };
 
@@ -293,7 +346,9 @@ export const changeUserRole = async (req, res, next) => {
 		// Check if the requester is an admin
 		const admin = await userModel.findById(adminId);
 		if (!admin || admin.role !== "Admin") {
-			return next(errorHandler(403, "Only administrators can change user roles"));
+			return next(
+				errorHandler(403, "Only administrators can change user roles")
+			);
 		}
 
 		// Validate the target user ID
@@ -315,9 +370,13 @@ export const changeUserRole = async (req, res, next) => {
 
 		// Prevent changing the last admin's role
 		if (user.role === "Admin" && newRole !== "Admin") {
-			const adminCount = await userModel.countDocuments({ role: "Admin" });
+			const adminCount = await userModel.countDocuments({
+				role: "Admin",
+			});
 			if (adminCount <= 1) {
-				return next(errorHandler(400, "Cannot change the last admin's role"));
+				return next(
+					errorHandler(400, "Cannot change the last admin's role")
+				);
 			}
 		}
 
@@ -328,10 +387,10 @@ export const changeUserRole = async (req, res, next) => {
 		return res.status(200).json({
 			success: true,
 			message: "User role updated successfully",
-			
 		});
-
 	} catch (error) {
-		return next(errorHandler(500, "Error updating user role: " + error.message));
+		return next(
+			errorHandler(500, "Error updating user role: " + error.message)
+		);
 	}
 };
