@@ -53,14 +53,14 @@ export const store = async (req, res) => {
 			}
 			await doctor.updateOne(
 				{
-					$push: { appoints: savedAppointment },
+					$push: { appointments: savedAppointment },
 					//$push: { appointments: savedAppointment._id },
 				},
 				{ session }
 			);
 			await user.findByIdAndUpdate(
 				{ _id: userId },
-				{ $push: { appoints: savedAppointment } },
+				{ $push: { appointments: savedAppointment } },
 				{ session }
 			);
 			await session.commitTransaction();
@@ -101,12 +101,12 @@ export const deleteAppointUser = async (req, res) => {
 			await Appointment.findByIdAndDelete(req.params.id).session(session);
 			await user.findByIdAndUpdate(
 				{ _id: userId },
-				{ $pull: { appoints: appointment } },
+				{ $pull: { appointments: appointment } },
 				{ new: true, session }
 			);
 			await user.findByIdAndUpdate(
 				{ _id: appointment.doctorId },
-				{ $pull: { appoints: appointment } },
+				{ $pull: { appointments: appointment } },
 				{ new: true, session }
 			);
 			await session.commitTransaction();
@@ -151,19 +151,19 @@ export const deleteAppointDoctor = async (req, res) => {
 			// Remove the appointment from the doctor's record
 			await user.findByIdAndUpdate(
 				doctorId,
-				{ $pull: { appoints: appointment } },
+				{ $pull: { appointments: appointment } },
 				{ new: true, session }
 			);
 			await user.findByIdAndUpdate(
 				appointment.patientId,
-				{ $pull: { appoints: appointment } },
+				{ $pull: { appointments: appointment } },
 				{ session }
 			);
 			await user.findByIdAndUpdate(
 				appointment.patientId,
 				{
 					$push: {
-						appoints: {
+						appointments: {
 							appointmentId: appointment._id,
 							status: "deleted",
 						},
@@ -238,14 +238,14 @@ export const update = async (req, res) => {
 			// Remove old appointment from patient
 			await user.findByIdAndUpdate(
 				userId,
-				{ $pull: { appoints: oldAppoint } },
+				{ $pull: { appointments: oldAppoint } },
 				{ session }
 			);
 
 			// Add updated appointment to patient
 			await user.findByIdAndUpdate(
 				userId,
-				{ $push: { appoints: newAppointment } },
+				{ $push: { appointments: newAppointment } },
 				{ session }
 			);
 
@@ -253,14 +253,14 @@ export const update = async (req, res) => {
 			if (doctorId) {
 				await user.findByIdAndUpdate(
 					doctorId,
-					{ $pull: { appoints: oldAppoint } },
+					{ $pull: { appointments: oldAppoint } },
 					{ session }
 				);
 
 				// Add updated appointment to doctor
 				await user.findByIdAndUpdate(
 					doctorId,
-					{ $push: { appoints: newAppointment } },
+					{ $push: { appointments: newAppointment } },
 					{ session }
 				);
 			}

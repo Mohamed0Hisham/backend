@@ -97,7 +97,9 @@ export const store = async (req, res, next) => {
 			success: true,
 		});
 	} catch (error) {
-		return next(errorHandler(500, "Error while inserting the advice:" + error));
+		return next(
+			errorHandler(500, "Error while inserting the advice:" + error)
+		);
 	}
 };
 
@@ -137,7 +139,10 @@ export const update = async (req, res, next) => {
 		});
 	} catch (error) {
 		return next(
-			errorHandler(500, "Error while updating the advice:" + error.message)
+			errorHandler(
+				500,
+				"Error while updating the advice:" + error.message
+			)
 		);
 	}
 };
@@ -160,7 +165,10 @@ export const destroy = async (req, res, next) => {
 		});
 	} catch (error) {
 		return next(
-			errorHandler(500, "Error while deleting the advice:" + error.message)
+			errorHandler(
+				500,
+				"Error while deleting the advice:" + error.message
+			)
 		);
 	}
 };

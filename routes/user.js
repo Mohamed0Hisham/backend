@@ -19,7 +19,9 @@ router.patch(
 	authenticateJWT,
 	userController.update
 );
-router.delete("/:id", authenticateJWT, userController.destroy);
+// router.delete("/:id", authenticateJWT, userController.destroy);
+router.delete("/", authenticateJWT, userController.deleteAccount);
+router.patch("/role/:userId", authenticateJWT, userController.changeUserRole);
 
 // Use export default for the router
 export default router;
