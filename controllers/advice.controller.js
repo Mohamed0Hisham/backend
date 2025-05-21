@@ -8,7 +8,13 @@ import { uploadImg, deleteImg } from "../helpers/images.js";
 export const index = async (req, res, next) => {
 	try {
 		// Fetch all advice items
-		const adviceList = await ADVICE.find().lean();
+		const page = parseInt(req.query.page) || 1;
+		const limit = 10;
+		const skip = (page - 1) * limit;
+		const adviceList = await ADVICE.find()
+		.skip(skip)
+			.limit(limit)
+			.lean();
 		if (adviceList.length === 0) {
 			return next(errorHandler(200, "Advice list is empty"));
 		}
@@ -45,12 +51,16 @@ export const index = async (req, res, next) => {
 				...item,
 			})
 		);
-
+           const totalAdvices = await ADVICE.countDocuments()
+				const totalPages = Math.ceil(totalAdvices / limit)
 		// Step 5: Return the response
 		return res.status(200).json({
 			data: advice,
 			message: "Advices fetched successfully",
 			success: true,
+			totalAdvices: totalAdvices,
+			totalPages: totalPages,
+			currentPage: page,
 		});
 	} catch (error) {
 		return next(errorHandler(500, "Error while fetching advices: " + error));

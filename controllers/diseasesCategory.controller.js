@@ -4,25 +4,45 @@ import mongoose from "mongoose";
 
 export const index = async (req, res, next) => {
 	try {
-		const diseasesCategories = await DiseasesCategory.find();
+		// Get pagination parameters from query string or default them
+		const page = parseInt(req.query.page) || 1; // Default to page 1
+		const limit = parseInt(req.query.limit) || 10; // Default to 10 items per page
+		const skip = (page - 1) * limit; // Calculate the number of documents to skip
+
+		// Fetch disease categories with pagination
+		const diseasesCategories = await DiseasesCategory.find()
+			.skip(skip) // Skip the specified number of documents
+			.limit(limit) // Limit the number of documents returned
+			.lean(); // Convert to plain JavaScript objects
+
 		if (diseasesCategories.length === 0) {
-			return next(errorHandler(204, "There aren't any diesasescategories"));
+			return next(errorHandler(204, "There aren't any disease categories")); // 204 No Content for empty page
 		}
+
+		
+		const totalDiseaseCategories = await DiseasesCategory.countDocuments();
+		const totalPages = Math.ceil(totalDiseaseCategories / limit);
+
+		// Return the response 
 		return res.status(200).json({
 			data: diseasesCategories,
-			msg: "All Dieseascescategories are retrieved ",
+			msg: "All disease categories retrieved successfully",
 			success: true,
+			totalDiseaseCategories: totalDiseaseCategories,
+			totalPages: totalPages,
+			currentPage: page,
 		});
 	} catch (error) {
 		return next(
 			errorHandler(
 				500,
-				"An error occurred while retrieving the DiseasesCategories. Please try again later." +
+				"An error occurred while retrieving the disease categories. Please try again later: " +
 					error
 			)
 		);
 	}
 };
+
 
 export const show = async (req, res, next) => {
 	try {
