@@ -5,14 +5,27 @@ import { uploadImg, deleteImg } from "../helpers/images.js";
 
 export const index = async (req, res, next) => {
 	try {
-		const advertisement = await ADVERTISEMENT.find().lean();
+		const page = parseInt(req.query.page) || 1;
+		const limit = 10;
+		const skip = (page - 1) * limit;
+		const advertisement = await ADVERTISEMENT.find()//.sort({ : 1 }) 
+			.skip(skip)
+			.limit(limit)
+			.lean();
+
 		if (advertisement.length == 0) {
 			return next(errorHandler(204, "There are no Advertisments"));
 		}
+		const totalAdvertisements = await ADVERTISEMENT.countDocuments()
+		const totalPages = Math.ceil(totalAdvertisements / limit)
 		return res.status(200).json({
 			data: advertisement,
 			message: "advertisements fetched successfully",
 			success: true,
+			totalAdvertisements: totalAdvertisements,
+			totalPages: totalPages,
+			currentPage: page,
+
 		});
 	} catch (error) {
 		return next(
@@ -41,7 +54,7 @@ export const show = async (req, res, next) => {
 			errorHandler(
 				500,
 				"An error occurred while retrieving the Advertisment. Please try again later." +
-					error
+				error
 			)
 		);
 	}

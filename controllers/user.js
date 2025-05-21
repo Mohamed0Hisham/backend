@@ -141,29 +141,51 @@ export const logout = async (req, res) => {
 
 export const index = async (req, res, next) => {
 	try {
-		if (req.user.role != "Admin") {
+		// Check if the user is an Admin
+		if (req.user.role !== "Admin") {
 			return res.status(403).json({
-				message: "This Action is forbidden",
+				message: "This action is forbidden",
+
 			});
 		}
-		const users = await userModel.find();
+
+		const page = parseInt(req.query.page) || 1;
+		const limit = parseInt(req.query.limit) || 10; 
+		const skip = (page - 1) * limit; 
+
+		
+		const users = await userModel.find()
+			.skip(skip) 
+			.limit(limit) 
+			.lean(); 
+
 		if (users.length === 0) {
-			return next(errorHandler(404, "There are no users "));
+			return next(errorHandler(404, "There are no users")); // 404 Not Found for empty result
 		}
+
+		const totalUsers = await userModel.countDocuments();
+
+		const totalPages = Math.ceil(totalUsers / limit);
+
+		// Return the response including pagination info
 		return res.status(200).json({
 			data: users,
-			msg: "There are some users ",
+			msg: "There are some users",
 			success: true,
+			totalUsers: totalUsers,
+			totalPages: totalPages,
+			currentPage: page,
 		});
 	} catch (error) {
 		return next(
 			errorHandler(
 				500,
-				`There is an error occured when retrieving the user data,Please try again later ${error}`
+				`There was an error occurred when retrieving the user data. Please try again later: ${error}`
 			)
 		);
 	}
 };
+
 
 export const show = async (req, res, next) => {
 	try {

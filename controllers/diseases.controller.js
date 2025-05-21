@@ -6,8 +6,15 @@ import { errorHandler } from "../helpers/errorHandler.js";
 
 export const index = async (req, res, next) => {
 	try {
+		const page = parseInt(req.query.page) || 1;
+		const limit = parseInt(req.query.limit) || 10; 
+		const skip = (page - 1) * limit;
 		// Fetch all diseases
-		const diseases = await DISEASES.find().lean();
+		const diseases = await DISEASES.find()
+		.skip(skip)
+		.limit(limit)
+		.lean();
+
 		if (diseases.length === 0) {
 			return next(errorHandler(204, "There aren't any diseases"));
 		}
@@ -33,12 +40,17 @@ export const index = async (req, res, next) => {
 				...item,
 			})
 		);
-
-		// Step 5: Return the response
+		const totalDiseases = await DISEASES.countDocuments();
+	
+		const totalPages = Math.ceil(totalDiseases / limit);
+	
 		return res.status(200).json({
 			data: diseasesWithCategoryNames,
 			message: "All diseases retrieved successfully",
 			success: true,
+			totalDiseases: totalDiseases,
+			totalPages: totalPages,
+			currentPage: page,
 		});
 	} catch (error) {
 		return next(
