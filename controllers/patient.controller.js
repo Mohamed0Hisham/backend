@@ -81,19 +81,24 @@ export const registerPatient = async (req, res, next) => {
 			emergencyContact,
 		} = req.body;
 
-		if (
-			!name ||
-			!gender ||
-			!dateOfBirth ||
-			!emergencyContact ||
-			!email ||
-			!password ||
-			!phone ||
-			!city ||
-			!country
-		) {
+		const missingFields = [];
+
+		if (!name) missingFields.push("name");
+		if (!gender) missingFields.push("gender");
+		if (!email) missingFields.push("email");
+		if (!dateOfBirth) missingFields.push("dateOfBirth");
+		if (!password) missingFields.push("password");
+		if (!phone) missingFields.push("phone");
+		if (!city) missingFields.push("city");
+		if (!country) missingFields.push("country");
+		if (!emergencyContact) missingFields.push("emergencyContact");
+
+		if (missingFields.length > 0) {
 			return next(
-				errorHandler(400, "Please provide all the required fields")
+				errorHandler(
+					400,
+					`Missing required fields: ${missingFields.join(", ")}`
+				)
 			);
 		}
 
