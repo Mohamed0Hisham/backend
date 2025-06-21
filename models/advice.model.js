@@ -34,6 +34,10 @@ const adviceSchema = mongoose.Schema(
 			type: String,
 			// default: process.env.ADVICE_DEFAULT_IMAGE_PUBLICID,
 		},
+		likesCount: {
+			type: Number,
+			default: 0
+		  },
 	},
 	{
 		timestamps: true,

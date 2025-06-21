@@ -21,6 +21,7 @@ import conversationRouter from "./routes/conversation.router.js";
 import pdfRouter from "./routes/pdf.routes.js";
 import patientRouter from "./routes/patient.routes.js";
 import diagnosisRouter from "./routes/diagnosis.routes.js";
+import interactionRouter from "./routes/interacrion.route.js"
 dotenv.config();
 
 configDotenv();
@@ -69,6 +70,7 @@ app.use("/api/conversation", conversationRouter);
 app.use("/api/file", pdfRouter);
 app.use("/api/patient", patientRouter);
 app.use("/api/diagnosis", diagnosisRouter);
+app.use("/api",interactionRouter)
 
 app.get("*", (req, res) => {
 	return res.status(404).json({
