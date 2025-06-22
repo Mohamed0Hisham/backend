@@ -1,4 +1,5 @@
 import { errorHandler } from "../helpers/errorHandler.js";
+import { invalidateDiagnosisCache } from "../helpers/invalidateDiagnosesCache.js";
 import Diagnosis from "../models/diagnosis.model.js";
 import User from "../models/userModel.js";
 
@@ -150,6 +151,8 @@ export const addDiagnosis = async (req, res, next) => {
 			notes,
 		});
 
+		await invalidateDiagnosisCache(patientId);
+
 		return res.status(201).json({
 			success: true,
 			message: "new diagnosis added to the patient",
@@ -219,6 +222,8 @@ export const updateDiagnosis = async (req, res, next) => {
 			.populate("medications")
 			.lean();
 
+		await invalidateDiagnosisCache(patientId, diagnosisId);
+
 		return res.status(200).json({
 			success: true,
 			message: "Diagnosis updated",
@@ -248,6 +253,8 @@ export const deleteDiagnosis = async (req, res, next) => {
 			return next(errorHandler(404, "Diagnosis doesn't exist"));
 
 		await Diagnosis.findByIdAndDelete(diagnosisId).lean();
+
+		await invalidateDiagnosisCache(patientId, diagnosisId);
 
 		return res.status(200).json({
 			success: true,
