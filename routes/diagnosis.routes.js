@@ -24,5 +24,5 @@ router.post("/", isAuth, addDiagnosis);
 
 router.put("/:patientId/:diagnosisId", isAuth, updateDiagnosis);
 
-router.delete("/:diagnosisId", isAuth, deleteDiagnosis);
+router.delete("/:patientId/:diagnosisId", isAuth, deleteDiagnosis);
 export default router;

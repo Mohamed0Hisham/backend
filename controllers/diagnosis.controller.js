@@ -244,9 +244,9 @@ export const deleteDiagnosis = async (req, res, next) => {
 		)
 			return next(errorHandler(401, "unauthorized operation"));
 
-		const { diagnosisId } = req.params;
-		if (!diagnosisId)
-			return next(errorHandler(400, "missing diagnosis ID"));
+		const { patientId, diagnosisId } = req.params;
+		if (!patientId || !diagnosisId)
+			return next(errorHandler(400, "missing patient or diagnosis ID"));
 
 		const diagnosis = await Diagnosis.findById(diagnosisId).lean();
 		if (!diagnosis)
