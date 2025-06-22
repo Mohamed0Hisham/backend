@@ -7,12 +7,18 @@ import {
 	fetchSpecificDiagnosis,
 	updateDiagnosis,
 } from "../controllers/diagnosis.controller.js";
+import cache from "../middlewares/cache.js";
 
 const router = express.Router();
 
-router.get("/:patientId/all", isAuth, fetchAllDiagnoses);
+router.get("/:patientId/all", isAuth, cache(600), fetchAllDiagnoses);
 
-router.get("/:patientId/:diagnosisId", isAuth, fetchSpecificDiagnosis);
+router.get(
+	"/:patientId/:diagnosisId",
+	isAuth,
+	cache(600),
+	fetchSpecificDiagnosis
+);
 
 router.post("/", isAuth, addDiagnosis);
 

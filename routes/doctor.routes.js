@@ -8,7 +8,7 @@ import {
 } from "../controllers/doctor.controller.js";
 const router = express.Router();
 
-router.get("/", authenticateJWT, show);
+router.get("/", authenticateJWT, cache(600), show);
 
 router.post("/", store);
 
