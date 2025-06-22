@@ -1,5 +1,6 @@
-import redisClient from "../helpers/redisClient.js";
+import initRedis from "../helpers/redisClient.js";
 
+const redisClient = await initRedis();
 const cachePDF = (keyGenerator, ttl = 3600) => {
 	return async (req, res, next) => {
 		try {
