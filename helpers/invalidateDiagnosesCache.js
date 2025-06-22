@@ -1,4 +1,3 @@
-// helpers/invalidateDiagnosisCache.js
 import redisClient from "./redisClient.js";
 
 export const invalidateDiagnosisCache = async (
