@@ -6,6 +6,7 @@ import {
 	store,
 	update,
 } from "../controllers/doctor.controller.js";
+import cache from "../middlewares/cache.js";
 const router = express.Router();
 
 router.get("/", authenticateJWT, cache(600), show);

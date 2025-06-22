@@ -1,7 +1,8 @@
 import express from "express";
 import { index, store } from "../controllers/conversation.js";
 import authintication from "../middlewares/auth.js";
+import cacheForUser from "../middlewares/cacheForUser.js";
 const router = express.Router();
 router.post("/", authintication, store);
-router.get("/:userId", authintication, index);
+router.get("/:userId", authintication, cacheForUser(600), index);
 export default router;
