@@ -1,9 +1,9 @@
-import initRedis from "../helpers/redisClient";
+import initRedis from "../helpers/redisClient.js";
 
-const redisClient = initRedis();
+const redisClient = await initRedis();
 
 const cache = (ttlsec = 300) => {
-	async function cacheing(req, res, next) {
+	return async function cacheing(req, res, next) {
 		try {
 			const key = `__cache__${req.originalUrl}`;
 			const cached = await redisClient.get(key);
@@ -28,9 +28,7 @@ const cache = (ttlsec = 300) => {
 			console.error("Redis cache middleware error:", err);
 			next();
 		}
-	}
-
-	return cacheing;
+	};
 };
 
 export default cache;

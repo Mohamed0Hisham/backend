@@ -1,4 +1,4 @@
-const { createClient } = require("redis");
+import { createClient } from "redis";
 
 async function initRedis() {
 	const redisClient = createClient();
