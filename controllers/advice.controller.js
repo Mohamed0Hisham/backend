@@ -11,10 +11,7 @@ export const index = async (req, res, next) => {
 		const page = parseInt(req.query.page) || 1;
 		const limit = 10;
 		const skip = (page - 1) * limit;
-		const adviceList = await ADVICE.find()
-		.skip(skip)
-			.limit(limit)
-			.lean();
+		const adviceList = await ADVICE.find().skip(skip).limit(limit).lean();
 		if (adviceList.length === 0) {
 			return next(errorHandler(200, "Advice list is empty"));
 		}
@@ -32,10 +29,13 @@ export const index = async (req, res, next) => {
 		const doctors = await USER.find({ _id: { $in: doctorIDs } });
 
 		// Step 3: Create mappings for diseases categories and doctors
-		const diseasesCategoryMap = diseasesCategories.reduce((acc, category) => {
-			acc[category._id.toString()] = category.name;
-			return acc;
-		}, {});
+		const diseasesCategoryMap = diseasesCategories.reduce(
+			(acc, category) => {
+				acc[category._id.toString()] = category.name;
+				return acc;
+			},
+			{}
+		);
 
 		const doctorMap = doctors.reduce((acc, doctor) => {
 			acc[doctor._id.toString()] = doctor.name; // Assuming the Doctor model has a 'name' field
@@ -46,13 +46,14 @@ export const index = async (req, res, next) => {
 		const advice = adviceList.map(
 			({ diseasesCategoryId, doctorId, ...item }) => ({
 				diseasesCategoryName:
-					diseasesCategoryMap[diseasesCategoryId?.toString()] || "unknown",
+					diseasesCategoryMap[diseasesCategoryId?.toString()] ||
+					"unknown",
 				doctorName: doctorMap[doctorId?.toString()] || "unknown", // Add doctorName
 				...item,
 			})
 		);
-           const totalAdvices = await ADVICE.countDocuments()
-				const totalPages = Math.ceil(totalAdvices / limit)
+		const totalAdvices = await ADVICE.countDocuments();
+		const totalPages = Math.ceil(totalAdvices / limit);
 		// Step 5: Return the response
 		return res.status(200).json({
 			data: advice,
@@ -63,7 +64,9 @@ export const index = async (req, res, next) => {
 			currentPage: page,
 		});
 	} catch (error) {
-		return next(errorHandler(500, "Error while fetching advices: " + error));
+		return next(
+			errorHandler(500, "Error while fetching advices: " + error)
+		);
 	}
 };
 
@@ -123,7 +126,10 @@ export const update = async (req, res, next) => {
 				result.ImgPublicId = image.ImgPublicId;
 			} catch (error) {
 				return next(
-					errorHandler(500, "Error while Upload or delete picture" + error)
+					errorHandler(
+						500,
+						"Error while Upload or delete picture" + error
+					)
 				);
 			}
 		}
@@ -151,7 +157,9 @@ export const destroy = async (req, res, next) => {
 	const id = req.params.id;
 	try {
 		if (!id) {
-			return next(errorHandler(400, "Please provide the ID of the advice"));
+			return next(
+				errorHandler(400, "Please provide the ID of the advice")
+			);
 		}
 		if (!mongoose.Types.ObjectId.isValid(id)) {
 			return next(errorHandler(400, "Invalid Advertisment ID"));
