@@ -78,7 +78,8 @@ export const store = async (req, res, next) => {
 		!result.doctorId ||
 		!result.diseasesCategoryId ||
 		!result.description ||
-		!result.title
+		!result.title||
+		!req.file
 	) {
 		return next(errorHandler(400, "Please provide all required fields"));
 	}
@@ -89,12 +90,10 @@ export const store = async (req, res, next) => {
 		return next(errorHandler(422, "Description is too long"));
 	}
 	try {
-		if (req.file) {
-			const image = await uploadImg(req.file);
-			result.ImgUrl = image.ImgUrl;
-			result.ImgPublicId = image.ImgPublicId;
-		}
-
+		
+		const image = await uploadImg(req.file);
+		result.ImgUrl = image.ImgUrl;
+		result.ImgPublicId = image.ImgPublicId;
 		const newAdvice = await new ADVICE(result);
 		await newAdvice.save();
 
@@ -145,7 +144,7 @@ export const update = async (req, res, next) => {
 			{ new: true } // Return the updated document
 		).lean();
 
-		await invalidateCache(["/api/advices/", `/api/advices/${id}`]);
+		await invalidateCache(["/api/advices/", `api/advices/${id}`]);
 
 		return res.status(200).json({
 			data: UpdatedAdvice,
@@ -174,11 +173,10 @@ export const destroy = async (req, res, next) => {
 			return next(errorHandler(400, "Invalid Advertisment ID"));
 		}
 		const advice = await ADVICE.findById(id);
-		// if (advice.ImgPublicId) await deleteImg(advice.ImgPublicId);
-		
+		await deleteImg(advice.ImgPublicId);
 		await ADVICE.deleteOne({ _id: id });
 
-		await invalidateCache(["/api/advices/", `/api/advices/${id}`]);
+		await invalidateCache(["/api/advices/", `api/advices/${id}`]);
 
 		return res.status(200).json({
 			success: true,

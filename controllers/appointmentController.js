@@ -19,20 +19,18 @@ export const store = async (req, res) => {
 		const doctor = await user.findById(doctorId);
 		const role = req.user.role;
 		const { nurseId, priority, appointmentDate } = req.body;
-        const currentDate = new Date();
-		currentDate.setHours(0,0,0,0);
-        const appointDate = new Date(appointmentDate);
-			if(appointDate < currentDate){
-				await session.abortTransaction();
-				
-				return res.status(400).send({
-					success: false,
+		const currentDate = new Date();
+		currentDate.setHours(0, 0, 0, 0);
+		const appointDate = new Date(appointmentDate);
+		if (appointDate < currentDate) {
+			await session.abortTransaction();
+
+			return res.status(400).send({
+				success: false,
 				message: "Appointment date must be today or in the future.",
-				})
-			}
+			});
+		}
 		if (role !== "Admin" && role !== "Hospital") {
-			
-            
 			const appoint = new Appointment({
 				patientId,
 				nurseId,
@@ -95,7 +93,9 @@ export const deleteAppointUser = async (req, res) => {
 			if (!appointment) {
 				await session.abortTransaction();
 				await session.endSession();
-				return res.status(404).json({ message: "Appointment not found" });
+				return res
+					.status(404)
+					.json({ message: "Appointment not found" });
 			}
 
 			await Appointment.findByIdAndDelete(req.params.id).session(session);
@@ -135,14 +135,16 @@ export const deleteAppointDoctor = async (req, res) => {
 		const session = await startSession();
 		try {
 			session.startTransaction();
-			const appointment = await Appointment.findById(req.params.id).session(
-				session
-			);
+			const appointment = await Appointment.findById(
+				req.params.id
+			).session(session);
 			if (!appointment) {
 				await session.abortTransaction();
 				await session.endSession();
 
-				return res.status(404).json({ message: "Appointment not found" });
+				return res
+					.status(404)
+					.json({ message: "Appointment not found" });
 			}
 
 			// Delete the appointment
@@ -217,11 +219,13 @@ export const update = async (req, res) => {
 		try {
 			session.startTransaction();
 			const appointmentId = req.params.id;
-			const oldAppoint = await Appointment.findById(appointmentId).session(
-				session
-			);
+			const oldAppoint = await Appointment.findById(
+				appointmentId
+			).session(session);
 			if (!oldAppoint) {
-				return res.status(404).json({ message: "Appointment not found" });
+				return res
+					.status(404)
+					.json({ message: "Appointment not found" });
 			}
 
 			const doctorId = oldAppoint?.doctorId;
@@ -290,7 +294,7 @@ export const index = async (req, res, next) => {
 	if (role === "Admin") {
 		try {
 			const appointments = await Appointment.find();
-				
+
 			if (appointments.length === 0) {
 				return next(errorHandler(404, "There are no appointments"));
 			}
@@ -334,7 +338,9 @@ export const index = async (req, res, next) => {
 
 			// Check if no appointments found
 			if (appointments.length === 0) {
-				return res.status(404).json({ message: "No appointments found" });
+				return res
+					.status(404)
+					.json({ message: "No appointments found" });
 			}
 
 			res.json({

@@ -8,10 +8,12 @@ import {
 	deleteAppointUser,
 } from "../controllers/appointmentController.js";
 import authintication from "../middlewares/auth.js";
+import cacheForUser from "../middlewares/cacheForUser.js";
+
 const router = express.Router();
 
-router.get("/", authintication, index);
-router.get("/:id", authintication, show);
+router.get("/", authintication, cacheForUser(600), index);
+router.get("/:id", authintication, cacheForUser(600), show);
 router.post("/doctor/:id", authintication, store);
 router.patch("/:id", authintication, update);
 router.delete("/user/:id", authintication, deleteAppointUser);
