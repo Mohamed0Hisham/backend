@@ -4,6 +4,7 @@ import DiseasesCategory from "../models/diseasesCategory.model.js";
 import { errorHandler } from "../helpers/errorHandler.js";
 import mongoose from "mongoose";
 import { uploadImg, deleteImg } from "../helpers/images.js";
+import { invalidateCache } from "../helpers/invalidateCache.js";
 
 export const index = async (req, res, next) => {
 	try {
@@ -77,8 +78,7 @@ export const store = async (req, res, next) => {
 		!result.doctorId ||
 		!result.diseasesCategoryId ||
 		!result.description ||
-		!result.title ||
-		!req.file
+		!result.title
 	) {
 		return next(errorHandler(400, "Please provide all required fields"));
 	}
@@ -89,11 +89,17 @@ export const store = async (req, res, next) => {
 		return next(errorHandler(422, "Description is too long"));
 	}
 	try {
-		const image = await uploadImg(req.file);
-		result.ImgUrl = image.ImgUrl;
-		result.ImgPublicId = image.ImgPublicId;
+		if (req.file) {
+			const image = await uploadImg(req.file);
+			result.ImgUrl = image.ImgUrl;
+			result.ImgPublicId = image.ImgPublicId;
+		}
+
 		const newAdvice = await new ADVICE(result);
 		await newAdvice.save();
+
+		await invalidateCache(["/api/advices/"]);
+
 		return res.status(201).json({
 			data: newAdvice,
 			message: "successfully inserted",
@@ -138,6 +144,9 @@ export const update = async (req, res, next) => {
 			{ $set: result }, // Update only the fields provided in req.body
 			{ new: true } // Return the updated document
 		).lean();
+
+		await invalidateCache(["/api/advices/", `/api/advices/${id}`]);
+
 		return res.status(200).json({
 			data: UpdatedAdvice,
 			message: "successfully updated",
@@ -165,8 +174,12 @@ export const destroy = async (req, res, next) => {
 			return next(errorHandler(400, "Invalid Advertisment ID"));
 		}
 		const advice = await ADVICE.findById(id);
-		await deleteImg(advice.ImgPublicId);
+		// if (advice.ImgPublicId) await deleteImg(advice.ImgPublicId);
+		
 		await ADVICE.deleteOne({ _id: id });
+
+		await invalidateCache(["/api/advices/", `/api/advices/${id}`]);
+
 		return res.status(200).json({
 			success: true,
 			message: "deleted successfully",
