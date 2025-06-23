@@ -5,12 +5,12 @@ const redisClient = await initRedis();
 const cacheForUser = (ttlsec = 300) => {
 	return async (req, res, next) => {
 		try {
-			const key = `__cache__${req.user._id}/${req.originalUrl}`;
+			const key = `__cache__${req.user._id}${req.originalUrl}`;
 			const cached = await redisClient.get(key);
 
 			if (cached) {
 				console.log(
-					`[Redis] Cache hit for ${req.user._id}/${req.originalUrl}`
+					`[Redis] Cache hit for ${req.user._id}${req.originalUrl}`
 				);
 				return res.status(200).json({
 					success: true,

@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import { startSession } from "mongoose";
 import { errorHandler } from "../helpers/errorHandler.js";
 import emailService from "../Mail/emailService.js";
+import { invalidateCache } from "../helpers/invalidateCache.js";
 
 dotenv.config();
 
@@ -62,6 +63,9 @@ export const store = async (req, res) => {
 				{ session }
 			);
 			await session.commitTransaction();
+
+			await invalidateCache([`/api/appointments`]);
+
 			res.status(200).json({
 				message: "Appointment booked successfully",
 				appointment: savedAppointment,
@@ -110,7 +114,12 @@ export const deleteAppointUser = async (req, res) => {
 				{ new: true, session }
 			);
 			await session.commitTransaction();
-			res.json({ message: "book deleted", data: [] });
+
+			await invalidateCache([`${userId}/api/appointments`]);
+
+			return res
+				.status(200)
+				.json({ success: true, message: "book deleted" });
 		} catch (error) {
 			await session.abortTransaction();
 			console.error("Error deleting appointment:", error);
@@ -192,6 +201,9 @@ export const deleteAppointDoctor = async (req, res) => {
 			);
 
 			await session.commitTransaction();
+
+			await invalidateCache([`${doctorId}/api/appointments`]);
+
 			res.json({ message: "Appointment deleted successfully", data: [] });
 		} catch (error) {
 			await session.abortTransaction();
@@ -213,7 +225,6 @@ export const deleteAppointDoctor = async (req, res) => {
 export const update = async (req, res) => {
 	const role = req.user.role;
 	const userId = req.user._id;
-
 	if (role === "Patient") {
 		const session = await startSession();
 		try {
@@ -235,7 +246,7 @@ export const update = async (req, res) => {
 			const updatedAppointment = await Appointment.findByIdAndUpdate(
 				appointmentId,
 				/**{ $set: newAppointment },
-				{ new: true } // Return updated document*/
+				 { new: true } // Return updated document*/
 				newAppointment
 			).session(session);
 
@@ -269,6 +280,9 @@ export const update = async (req, res) => {
 				);
 			}
 			await session.commitTransaction();
+
+			await invalidateCache([`${userId}/api/appointments`]);
+
 			res.json({
 				message: "Appointment updated successfully",
 				data: updatedAppointment,
