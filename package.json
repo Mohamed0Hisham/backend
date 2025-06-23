@@ -17,6 +17,7 @@
 		"axios": "^1.8.1",
 		"bcryptjs": "^2.4.3",
 		"cloudinary": "^2.6.0",
+		"cookie-parser": "^1.4.7",
 		"cookies-parser": "^1.2.0",
 		"cors": "^2.8.5",
 		"date-fns": "^4.1.0",

@@ -7,7 +7,7 @@ import emailService from "../Mail/emailService.js";
 import { uploadImg, deleteImg } from "../helpers/images.js";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
-import { generateToken } from "../middlewares/auth.js";
+import { generateAccessToken, generateRefreshToken ,verifyRefreshToken} from "../controllers/token.js";
 
 dotenv.config();
 
@@ -64,7 +64,7 @@ export const register = async (req, res, next) => {
 		const hashedPassword = await bcrypt.hash(req.body.password, 10);
 		newUser.password = hashedPassword;
 
-		const token = jwt.sign({ email: email }, process.env.JWT_SECRET, {
+		const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, {
 			expiresIn: "24h",
 		});
 
@@ -107,15 +107,34 @@ export const login = async (req, res) => {
 				.status(401)
 				.json({ message: "Invalid email or password" });
 		}
-		const token = generateToken(user);
-		if (!token)
+		const accessToken = generateAccessToken(user);
+		const refreshToken = generateRefreshToken(user);
+
+		user.refreshTokens.push(refreshToken);
+		await user.save();
+
+		/**if (!accessToken)
 			return res
 				.status(500)
-				.json({ success: false, message: "failed to generate token" });
+				.json({ success: false, message: "failed to generate token" });*/
 
-		res.header("token", token);
+        res.cookie("refreshToken",refreshToken,{
+			httpOnly : true ,
+			secure: process.env.NODE_ENV === 'production',
+			maxAge : 60 * 60 * 1000
+		})
+		res.cookie("accessToken",accessToken,{
+			httpOnly : true ,
+			secure: process.env.NODE_ENV === 'production',
+			maxAge : 30 *24 * 60 * 60 * 1000
+		})
+		
+
+		res.header("accessToken", accessToken);
 		return res.status(200).json({
-			token,
+			accessToken,
+			refreshToken,
+			//user: { id: user._id, name: user.name, email: user.email, role: user.role }
 		});
 	} catch (error) {
 		console.error(error);
@@ -125,20 +144,51 @@ export const login = async (req, res) => {
 	}
 };
 export const logout = async (req, res) => {
-	try {
-		const token = req.headers.authorization; // Get token from header
-		if (!token) {
-			return res.status(400).json({ message: "No token provided" });
-		}
-
-		addToBlacklist(token); // Now correctly calling the function
-
-		res.status(200).json({ message: "Logged out successfully" });
-	} catch (error) {
-		res.status(500).json({ message: "Server error during logout", error });
-	}
+    try {
+        const refreshToken = req.cookies.refreshToken; // Access the refresh token correctly
+        if (!refreshToken) {
+            return res.status(404).json({ message: "No refresh token found, logout denied" });
+        }
+        const user = await userModel.findOne({ refreshTokens: refreshToken });
+        if (user) {
+            user.refreshTokens = user.refreshTokens.filter(token => token !== refreshToken);
+            await user.save();
+        }
+        // Clear cookies
+        res.clearCookie("accessToken");
+        res.clearCookie("refreshToken");
+        return res.status(200).json({ message: "Logged out successfully" });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Server error during logout", error });
+    }
 };
+export const refresh = async(req,res)=>{
+	try {
+	const {refreshToken} = req.cookies
+	if(!refreshToken){
+		return res.status(401).json({ message: 'No refresh token provided' });
+	}
+	const decodedToken = verifyRefreshToken(refreshToken)
+	const user = await userModel.findById(decodedToken._id)
 
+	if(!user || !user.refreshTokens.includes(refreshToken)){
+		return res.status(403).json({ message: 'Invalid refresh token' });
+	}
+	const newAccessToken = generateAccessToken(user);
+	res.cookie("newAccessToken",newAccessToken,{
+		httpOnly: true,
+		secure: process.env.NODE_ENV === 'production',
+		maxAge: 60 * 60 * 1000
+	})
+	return res.status(200).json({ newAccessToken, message: " successfully" });
+} catch (error) {
+	console.error(error);
+	return res.status(500).json({ message: "Server error during refreshing", error });
+
+}
+	
+}
 export const index = async (req, res, next) => {
 	try {
 		// Check if the user is an Admin
