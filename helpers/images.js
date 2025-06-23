@@ -1,10 +1,9 @@
-import dotenv from "dotenv";
+import {configDotenv} from "dotenv";
 import { v2 as cloudinary } from "cloudinary";
 import sharp from "sharp";
 
 // Load environment variables from .env file
-dotenv.config();
-
+configDotenv()
 // Initialize Cloudinary with credentials from .env
 cloudinary.config({
 	cloud_name: process.env.CLOUDINARY_CLOUD_NAME,

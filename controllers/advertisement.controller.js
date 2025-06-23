@@ -131,7 +131,10 @@ export const update = async (req, res, next) => {
 			{ new: true } // Return the updated document
 		).lean();
 
-		await invalidateCache([`/api/advertisements/${id}`]);
+		await invalidateCache([
+			`/api/advertisements/${id}`,
+			"/api/advertisements/",
+		]);
 
 		return res.status(200).json({
 			data: UpdatedAdvertisement,
@@ -163,7 +166,10 @@ export const destroy = async (req, res, next) => {
 		await deleteImg(advertisement.ImgPublicId);
 		await ADVERTISEMENT.deleteOne({ _id: id });
 
-		await invalidateCache([`/api/advertisements/${id}`]);
+		await invalidateCache([
+			`/api/advertisements/${id}`,
+			"/api/advertisements/",
+		]);
 
 		return res.status(200).json({
 			success: true,
