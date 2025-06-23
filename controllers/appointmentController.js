@@ -93,7 +93,8 @@ export const deleteAppointUser = async (req, res) => {
 		try {
 			session.startTransaction();
 
-			const appointment = await Appointment.findById(req.params.id);
+			const appointmentId = req.params.id;
+			const appointment = await Appointment.findById(appointmentId);
 			if (!appointment) {
 				await session.abortTransaction();
 				await session.endSession();
@@ -102,7 +103,7 @@ export const deleteAppointUser = async (req, res) => {
 					.json({ message: "Appointment not found" });
 			}
 
-			await Appointment.findByIdAndDelete(req.params.id).session(session);
+			await Appointment.findByIdAndDelete(appointmentId).session(session);
 			await user.findByIdAndUpdate(
 				{ _id: userId },
 				{ $pull: { appointments: appointment } },
@@ -115,7 +116,10 @@ export const deleteAppointUser = async (req, res) => {
 			);
 			await session.commitTransaction();
 
-			await invalidateCache([`${userId}/api/appointments`]);
+			await invalidateCache([
+				`/api/appointments/${appointmentId}`,
+				`/api/appointments`,
+			]);
 
 			return res
 				.status(200)
@@ -143,9 +147,10 @@ export const deleteAppointDoctor = async (req, res) => {
 	if (role === "Admin" || role === "Nurse" || role === "Doctor") {
 		const session = await startSession();
 		try {
+			const appointmentId = req.params.id;
 			session.startTransaction();
 			const appointment = await Appointment.findById(
-				req.params.id
+				appointmentId
 			).session(session);
 			if (!appointment) {
 				await session.abortTransaction();
@@ -157,7 +162,7 @@ export const deleteAppointDoctor = async (req, res) => {
 			}
 
 			// Delete the appointment
-			await Appointment.findByIdAndDelete(req.params.id).session(session);
+			await Appointment.findByIdAndDelete(appointmentId).session(session);
 
 			// Remove the appointment from the doctor's record
 			await user.findByIdAndUpdate(
@@ -202,7 +207,10 @@ export const deleteAppointDoctor = async (req, res) => {
 
 			await session.commitTransaction();
 
-			await invalidateCache([`${doctorId}/api/appointments`]);
+			await invalidateCache([
+				`/api/appointments/${appointmentId}`,
+				`/api/appointments`,
+			]);
 
 			res.json({ message: "Appointment deleted successfully", data: [] });
 		} catch (error) {
@@ -281,7 +289,10 @@ export const update = async (req, res) => {
 			}
 			await session.commitTransaction();
 
-			await invalidateCache([`${userId}/api/appointments`]);
+			await invalidateCache([
+				`/api/appointments/${appointmentId}`,
+				`/api/appointments`,
+			]);
 
 			res.json({
 				message: "Appointment updated successfully",
