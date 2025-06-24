@@ -112,6 +112,9 @@ const userSchema = mongoose.Schema(
 			],
 			familyHistory: { type: String },
 		},
+		refreshTokens:{
+			type:[String]
+		}
 	},
 	{
 		timestamps: true,

@@ -10,6 +10,7 @@ const router = express.Router();
 router.post("/register", userController.register);
 router.post("/login", userController.login);
 router.post("/logout", userController.logout);
+router.post("/refresh", userController.refresh);
 router.get("/", authenticateJWT, userController.index);
 router.get("/one", authenticateJWT, userController.show);
 router.get("/doctors", userController.DoctorNames);

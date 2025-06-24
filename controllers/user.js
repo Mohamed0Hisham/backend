@@ -7,124 +7,190 @@ import emailService from "../Mail/emailService.js";
 import { uploadImg, deleteImg } from "../helpers/images.js";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
-import { generateToken } from "../middlewares/auth.js";
+import { generateAccessToken, generateRefreshToken ,verifyRefreshToken} from "../controllers/token.js";
 
 dotenv.config();
 
 export const register = async (req, res, next) => {
-  try {
-    const { name, gender, email, password, phone, city, country, dateOfBirth } =
-      req.body;
 
-    const missingFields = [];
+	try {
+		const {
+			name,
+			gender,
+			email,
+			password,
+			phone,
+			city,
+			country,
+			dateOfBirth,
+		} = req.body;
 
-    if (!name) missingFields.push("name");
-    if (!gender) missingFields.push("gender");
-    if (!email) missingFields.push("email");
-    if (!password) missingFields.push("password");
-    if (!phone) missingFields.push("phone");
-    if (!city) missingFields.push("city");
-    if (!country) missingFields.push("country");
-    if (!dateOfBirth) missingFields.push("dateOfBirth");
+		const missingFields = [];
 
-    if (missingFields.length > 0) {
-      return next(
-        errorHandler(
-          400,
-          `Missing required fields: ${missingFields.join(", ")}`
-        )
-      );
-    }
+		if (!name) missingFields.push("name");
+		if (!gender) missingFields.push("gender");
+		if (!email) missingFields.push("email");
+		if (!password) missingFields.push("password");
+		if (!phone) missingFields.push("phone");
+		if (!city) missingFields.push("city");
+		if (!country) missingFields.push("country");
+		if (!dateOfBirth) missingFields.push("dateOfBirth");
 
-    const existingUser = await userModel.findOne({ email });
-    if (existingUser) {
-      return res.status(409).json({ message: "This email already exists" });
-    }
+		if (missingFields.length > 0) {
+			return next(
+				errorHandler(
+					400,
+					`Missing required fields: ${missingFields.join(", ")}`
+				)
+			);
+		}
 
-    if (req.body.role) {
-      return next(
-        errorHandler(
-          401,
-          "Unauthorized operation, you can't set role for yourself"
-        )
-      );
-    }
+		const existingUser = await userModel.findOne({ email });
+		if (existingUser) {
+			return res
+				.status(409)
+				.json({ message: "This email already exists" });
+		}
 
-    const newUser = new userModel(req.body);
-    const hashedPassword = await bcrypt.hash(req.body.password, 10);
-    newUser.password = hashedPassword;
+		if (req.body.role) {
+			return next(
+				errorHandler(
+					401,
+					"Unauthorized operation, you can't set role for yourself"
+				)
+			);
+		}
 
-    const token = jwt.sign({ email: email }, process.env.JWT_SECRET, {
-      expiresIn: "24h",
-    });
+		const newUser = new userModel(req.body);
+		const hashedPassword = await bcrypt.hash(req.body.password, 10);
+		newUser.password = hashedPassword;
 
-    const user = await newUser.save();
-    if (!user) {
-      return res.status(500).json({ message: "User creation failed" });
-    }
+		const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, {
+			expiresIn: "24h",
+		});
 
-    await emailService.confirmEmail(email, token);
-    return res
-      .status(201)
-      .json({ message: "confirmation email has been sent" });
-  } catch (error) {
-    console.error(error.stack);
-    return res.status(500).json({
-      message: "An error occurred while registering the user " + error.message,
-    });
-  }
+		const user = await newUser.save();
+		if (!user) {
+			return res.status(500).json({ message: "User creation failed" });
+		}
+
+		await emailService.confirmEmail(email, token);
+		return res
+			.status(201)
+			.json({ message: "confirmation email has been sent" });
+	} catch (error) {
+		console.error(error.stack);
+		return res.status(500).json({
+			message:
+				"An error occurred while registering the user " + error.message,
+		});
+	}
 };
 
 export const login = async (req, res) => {
-  try {
-    const user = await userModel.findOne({ email: req.body.email });
-    if (!user) {
-      return res.status(401).json({ message: "Invalid email or password" });
-    }
+	try {
+		const user = await userModel.findOne({ email: req.body.email });
+		if (!user) {
+			return res
+				.status(401)
+				.json({ message: "Invalid email or password" });
+		}
 
-    if (!user.isVerified) {
-      return res
-        .status(401)
-        .json({ message: "unconfirmed email, check your email" });
-    }
+		if (!user.isVerified) {
+			return res
+				.status(401)
+				.json({ message: "unconfirmed email, check your email" });
+		}
 
-    const passwordCheck = await user.comparePassword(req.body.password);
-    if (!passwordCheck) {
-      return res.status(401).json({ message: "Invalid email or password" });
-    }
-    const token = generateToken(user);
-    if (!token)
-      return res
-        .status(500)
-        .json({ success: false, message: "failed to generate token" });
+		const passwordCheck = await user.comparePassword(req.body.password);
+		if (!passwordCheck) {
+			return res
+				.status(401)
+				.json({ message: "Invalid email or password" });
+		}
+		const accessToken = generateAccessToken(user);
+		const refreshToken = generateRefreshToken(user);
 
-    res.header("token", token);
-    return res.status(200).json({
-      Role: user.role,
-      token,
-    });
-  } catch (error) {
-    console.error(error);
-    return res
-      .status(500)
-      .json({ message: "An error occurred while logging in" });
-  }
+		user.refreshTokens.push(refreshToken);
+		await user.save();
+
+		/**if (!accessToken)
+			return res
+				.status(500)
+				.json({ success: false, message: "failed to generate token" });*/
+
+        res.cookie("refreshToken",refreshToken,{
+			httpOnly : true ,
+			secure: process.env.NODE_ENV === 'production',
+			maxAge : 60 * 60 * 1000
+		})
+		res.cookie("accessToken",accessToken,{
+			httpOnly : true ,
+			secure: process.env.NODE_ENV === 'production',
+			maxAge : 30 *24 * 60 * 60 * 1000
+		})
+		
+
+		res.header("accessToken", accessToken);
+		return res.status(200).json({
+			accessToken,
+			refreshToken,
+			//user: { id: user._id, name: user.name, email: user.email, role: user.role }
+		});
+	} catch (error) {
+		console.error(error);
+		return res
+			.status(500)
+			.json({ message: "An error occurred while logging in" });
+	}
 };
 export const logout = async (req, res) => {
-  try {
-    const token = req.headers.authorization; // Get token from header
-    if (!token) {
-      return res.status(400).json({ message: "No token provided" });
+    try {
+        const refreshToken = req.cookies.refreshToken; // Access the refresh token correctly
+        if (!refreshToken) {
+            return res.status(404).json({ message: "No refresh token found, logout denied" });
+        }
+        const user = await userModel.findOne({ refreshTokens: refreshToken });
+        if (user) {
+            user.refreshTokens = user.refreshTokens.filter(token => token !== refreshToken);
+            await user.save();
+        }
+        // Clear cookies
+        res.clearCookie("accessToken");
+        res.clearCookie("refreshToken");
+        return res.status(200).json({ message: "Logged out successfully" });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Server error during logout", error });
     }
-
-    addToBlacklist(token); // Now correctly calling the function
-
-    res.status(200).json({ message: "Logged out successfully" });
-  } catch (error) {
-    res.status(500).json({ message: "Server error during logout", error });
-  }
 };
+export const refresh = async(req,res)=>{
+	try {
+	const {refreshToken} = req.cookies
+	if(!refreshToken){
+		return res.status(401).json({ message: 'No refresh token provided' });
+	}
+	const decodedToken = verifyRefreshToken(refreshToken)
+	const user = await userModel.findById(decodedToken._id)
 
+
+	if(!user || !user.refreshTokens.includes(refreshToken)){
+		return res.status(403).json({ message: 'Invalid refresh token' });
+	}
+	const newAccessToken = generateAccessToken(user);
+	res.cookie("newAccessToken",newAccessToken,{
+		httpOnly: true,
+		secure: process.env.NODE_ENV === 'production',
+		maxAge: 60 * 60 * 1000
+	})
+	return res.status(200).json({ newAccessToken, message: " successfully" });
+} catch (error) {
+	console.error(error);
+	return res.status(500).json({ message: "Server error during refreshing", error });
+
+}
+	
+}
 export const index = async (req, res, next) => {
   try {
     // Check if the user is an Admin
