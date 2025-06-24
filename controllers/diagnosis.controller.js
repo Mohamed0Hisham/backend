@@ -151,7 +151,7 @@ export const addDiagnosis = async (req, res, next) => {
 			notes,
 		});
 
-		await invalidateCache([`/api/diagnosis/${patientId}`]);
+		await invalidateCache([`/api/diagnosis/${patientId}/all`]);
 		await invalidateDiagnosisCache(patientId);
 
 		return res.status(201).json({
@@ -224,6 +224,7 @@ export const updateDiagnosis = async (req, res, next) => {
 			.lean();
 
 		await invalidateDiagnosisCache(patientId, diagnosisId);
+		await invalidateCache([`/api/diagnosis/${patientId}/all`]);
 
 		return res.status(200).json({
 			success: true,
@@ -256,6 +257,7 @@ export const deleteDiagnosis = async (req, res, next) => {
 		await Diagnosis.findByIdAndDelete(diagnosisId).lean();
 
 		await invalidateDiagnosisCache(patientId, diagnosisId);
+		await invalidateCache([`/api/diagnosis/${patientId}/all`]);
 
 		return res.status(200).json({
 			success: true,
