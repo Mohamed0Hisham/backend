@@ -1,6 +1,7 @@
 import TREATMENT from "../models/treatment.model.js";
 import { errorHandler } from "../helpers/errorHandler.js";
 import mongoose from "mongoose";
+import { invalidateCache } from "../helpers/invalidateCache.js";
 
 export const index = async (req, res, next) => {
 	try {
@@ -89,6 +90,8 @@ export const store = async (req, res, next) => {
 		});
 		const result = await newTreatment.save();
 
+		await invalidateCache([`/api/treatments/`]);
+
 		return res.status(201).json({
 			data: result,
 			msg: "New Treatment has been created successfully",
@@ -120,6 +123,9 @@ export const update = async (req, res, next) => {
 		const result = await TREATMENT.findOneAndUpdate({ _id: id }, req.body, {
 			new: true,
 		});
+
+		await invalidateCache([`/api/treatments/`, `/api/treatments/${id}`]);
+
 		return res.status(200).json({
 			data: result,
 			msg: "The Treatment has successfully updated",
@@ -146,6 +152,9 @@ export const destroy = async (req, res, next) => {
 		if (!treatment) {
 			return res.status(404).json({ message: "Treatment not found" });
 		}
+
+		await invalidateCache([`/api/treatments/`, `/api/treatments/${id}`]);
+
 		const result = await TREATMENT.findOneAndDelete({ _id: id });
 		return res.status(204).json({
 			msg: "The Treatment has been successfully deleted",
