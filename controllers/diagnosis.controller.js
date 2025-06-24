@@ -151,6 +151,7 @@ export const addDiagnosis = async (req, res, next) => {
 			notes,
 		});
 
+		await invalidateCache([`/api/diagnosis/${patientId}`]);
 		await invalidateDiagnosisCache(patientId);
 
 		return res.status(201).json({
