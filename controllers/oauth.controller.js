@@ -1,6 +1,6 @@
 import User from "../models/userModel.js";
 import { errorHandler } from "../helpers/errorHandler.js";
-import { generateToken } from "../middlewares/auth.js";
+import { generateToken } from "./token.js";
 import axios from "axios";
 import jwt from "jsonwebtoken";
 import { isTokenInBlacklist } from "./blacklist.js";

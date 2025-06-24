@@ -2,6 +2,7 @@ import express from "express";
 import mongoose from "mongoose";
 import { configDotenv } from "dotenv";
 import cors from "cors";
+import cookieParser from 'cookie-parser';
 import dotenv from "dotenv";
 import rateLimter from "express-rate-limit";
 import userRouter from "./routes/user.js";
@@ -21,6 +22,7 @@ import conversationRouter from "./routes/conversation.router.js";
 import pdfRouter from "./routes/pdf.routes.js";
 import patientRouter from "./routes/patient.routes.js";
 import diagnosisRouter from "./routes/diagnosis.routes.js";
+import interactionRouter from "./routes/interacrion.route.js"
 dotenv.config();
 
 configDotenv();
@@ -50,6 +52,7 @@ app.use(
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 app.use(helmet());
 
 //APIs goes here
@@ -69,6 +72,7 @@ app.use("/api/conversation", conversationRouter);
 app.use("/api/file", pdfRouter);
 app.use("/api/patient", patientRouter);
 app.use("/api/diagnosis", diagnosisRouter);
+app.use("/api",interactionRouter)
 
 app.get("*", (req, res) => {
 	return res.status(404).json({
