@@ -1,6 +1,7 @@
 import DiseasesCategory from "../models/diseasesCategory.model.js";
 import { errorHandler } from "../helpers/errorHandler.js";
 import mongoose from "mongoose";
+import { invalidateCache } from "../helpers/invalidateCache.js";
 
 export const index = async (req, res, next) => {
 	try {
@@ -16,14 +17,15 @@ export const index = async (req, res, next) => {
 			.lean(); // Convert to plain JavaScript objects
 
 		if (diseasesCategories.length === 0) {
-			return next(errorHandler(204, "There aren't any disease categories")); // 204 No Content for empty page
+			return next(
+				errorHandler(204, "There aren't any disease categories")
+			); // 204 No Content for empty page
 		}
 
-		
 		const totalDiseaseCategories = await DiseasesCategory.countDocuments();
 		const totalPages = Math.ceil(totalDiseaseCategories / limit);
 
-		// Return the response 
+		// Return the response
 		return res.status(200).json({
 			data: diseasesCategories,
 			msg: "All disease categories retrieved successfully",
@@ -42,7 +44,6 @@ export const index = async (req, res, next) => {
 		);
 	}
 };
-
 
 export const show = async (req, res, next) => {
 	try {
@@ -90,6 +91,9 @@ export const store = async (req, res, next) => {
 			rank,
 		});
 		const result = await newDiesasesCategory.save();
+
+		await invalidateCache([`/api/diseasescategories/`]);
+
 		return res.status(201).json({
 			data: result,
 			msg: "New Diesasescategory has been created successfully",
@@ -125,6 +129,10 @@ export const update = async (req, res, next) => {
 			req.body,
 			{ new: true }
 		);
+		await invalidateCache([
+			`/api/diseasescategories/`,
+			`/api/diseasescategories/${id}`,
+		]);
 		return res.status(200).json({
 			data: result,
 			msg: "The DiseasesCategories has successfully updated",
@@ -149,11 +157,17 @@ export const destroy = async (req, res, next) => {
 	try {
 		const diseasesCategories = await DiseasesCategory.findById(id);
 		if (!diseasesCategories) {
-			return res.status(404).json({ message: "DiseasesCategories not found" });
+			return res
+				.status(404)
+				.json({ message: "DiseasesCategories not found" });
 		}
-		diesasescategory = await DiseasesCategory.findOneAndDelete({
+		await DiseasesCategory.findOneAndDelete({
 			_id: id,
 		});
+		await invalidateCache([
+			`/api/diseasescategories/`,
+			`/api/diseasescategories/${id}`,
+		]);
 		return res.status(204).json({
 			msg: "The DiseasesCategory has been successfully deleted",
 			success: true,
