@@ -14,7 +14,7 @@ const cacheForUser = (ttlsec = 300) => {
 				);
 				return res.status(200).json({
 					success: true,
-					message: `cache hit for ${req.user._id}/${req.originalUrl}`,
+					message: `cache hit for ${req.user._id}${req.originalUrl}`,
 					data: JSON.parse(cached),
 				});
 			}
