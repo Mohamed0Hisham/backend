@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import emailService from "../Mail/emailService.js";
 import jwt from "jsonwebtoken";
 import { errorHandler } from "../helpers/errorHandler.js";
+import { invalidateCache } from "../helpers/invalidateCache.js";
 
 export const fetchPatient = async (req, res, next) => {
 	try {
@@ -127,6 +128,8 @@ export const registerPatient = async (req, res, next) => {
 		});
 		await emailService.confirmEmail(email, token);
 
+		await invalidateCache([`/api/patient/all`]);
+
 		return res.status(201).json({
 			success: true,
 			message: "confirmation email has been sent to your email",
@@ -180,6 +183,8 @@ export const updatePatient = async (req, res, next) => {
 			new: true,
 		}).lean();
 
+		await invalidateCache([`/api/patient/all`, `/api/patient/one/${id}`]);
+
 		return res.status(200).json({
 			success: true,
 			message: "patient profile updated",
@@ -203,6 +208,9 @@ export const deletePatient = async (req, res, next) => {
 		)
 			return next(errorHandler(401, "unauthorized operation"));
 		await User.findByIdAndDelete(id);
+
+		await invalidateCache([`/api/patient/all`, `/api/patient/one/${id}`]);
+
 		return res.status(200).json({
 			success: true,
 			message: "patient deleted from database",
