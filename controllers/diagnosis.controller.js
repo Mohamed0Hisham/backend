@@ -1,5 +1,6 @@
 import { errorHandler } from "../helpers/errorHandler.js";
 import { invalidateDiagnosisCache } from "../helpers/invalidateDiagnosesCache.js";
+import { invalidateCache } from "../helpers/invalidateCache.js";
 import Diagnosis from "../models/diagnosis.model.js";
 import User from "../models/userModel.js";
 
