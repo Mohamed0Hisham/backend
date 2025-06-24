@@ -4,7 +4,6 @@
 	"main": "app.js",
 	"type": "module",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1",
 		"start": "node app.js",
 		"dev": "nodemon app.js",
 		"build": "npm install"
@@ -17,6 +16,7 @@
 		"axios": "^1.8.1",
 		"bcryptjs": "^2.4.3",
 		"cloudinary": "^2.6.0",
+		"cookie-parser": "^1.4.7",
 		"cookies-parser": "^1.2.0",
 		"cors": "^2.8.5",
 		"date-fns": "^4.1.0",
