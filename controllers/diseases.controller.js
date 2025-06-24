@@ -1,26 +1,25 @@
 import DISEASES from "../models/diseases.model.js";
 import DiseasesCategory from "../models/diseasesCategory.model.js";
 import mongoose from "mongoose";
-
+import { invalidateCache } from "../helpers/invalidateCache.js";
 import { errorHandler } from "../helpers/errorHandler.js";
 
 export const index = async (req, res, next) => {
 	try {
 		const page = parseInt(req.query.page) || 1;
-		const limit = parseInt(req.query.limit) || 10; 
+		const limit = parseInt(req.query.limit) || 10;
 		const skip = (page - 1) * limit;
 		// Fetch all diseases
-		const diseases = await DISEASES.find()
-		.skip(skip)
-		.limit(limit)
-		.lean();
+		const diseases = await DISEASES.find().skip(skip).limit(limit).lean();
 
 		if (diseases.length === 0) {
 			return next(errorHandler(204, "There aren't any diseases"));
 		}
 
 		// Step 1: Extract diseaseCategoryIDs
-		const diseaseCategoryIDs = diseases.map((item) => item.diseasecategoryId);
+		const diseaseCategoryIDs = diseases.map(
+			(item) => item.diseasecategoryId
+		);
 
 		// Step 2: Fetch disease categories from the database
 		const diseaseCategories = await DiseasesCategory.find({
@@ -36,14 +35,15 @@ export const index = async (req, res, next) => {
 		const diseasesWithCategoryNames = diseases.map(
 			({ diseasecategoryId, ...item }) => ({
 				diseaseCategoryName:
-					diseaseCategoryMap[diseasecategoryId?.toString()] || "unknown", // Add diseaseCategoryName
+					diseaseCategoryMap[diseasecategoryId?.toString()] ||
+					"unknown", // Add diseaseCategoryName
 				...item,
 			})
 		);
 		const totalDiseases = await DISEASES.countDocuments();
-	
+
 		const totalPages = Math.ceil(totalDiseases / limit);
-	
+
 		return res.status(200).json({
 			data: diseasesWithCategoryNames,
 			message: "All diseases retrieved successfully",
@@ -113,6 +113,9 @@ export const store = async (req, res, next) => {
 			diseasecategoryId,
 		});
 		const result = await newDiesases.save();
+
+		await invalidateCache(["/api/diseases/"]);
+
 		return res.status(201).json({
 			data: result,
 			msg: "New Diesase has been created successfully",
@@ -144,6 +147,9 @@ export const update = async (req, res, next) => {
 		const result = await DISEASES.findOneAndUpdate({ _id: id }, req.body, {
 			new: true,
 		});
+
+		await invalidateCache(["/api/diseases/", `/api/diseases/${id}`]);
+
 		return res.status(200).json({
 			data: result,
 			msg: "The Disease has successfully updated",
@@ -171,6 +177,7 @@ export const destroy = async (req, res, next) => {
 			return res.status(404).json({ message: "Diseases not found" });
 		}
 		const result = await DISEASES.findOneAndDelete({ _id: id });
+		await invalidateCache(["/api/diseases/", `/api/diseases/${id}`]);
 		return res.status(204).json({
 			msg: "The Disease has been successfully deleted",
 			success: true,
