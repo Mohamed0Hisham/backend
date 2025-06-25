@@ -31,8 +31,18 @@ export const store = async (req, res) => {
 				})
 			}
 		if (role !== "Admin" && role !== "Hospital") {
-			
-            
+			const appointment = await Appointment.findOne({
+				patientId: patientId,
+				doctorId: doctorId,
+				appointmentDate: appointmentDate
+			}); 
+			if(appointment){
+				await session.abortTransaction();
+				return res
+					.status(404)
+					.json({ success: false, message: "can`t book two appointment in the same day" });
+		
+			}
 			const appoint = new Appointment({
 				patientId,
 				nurseId,
@@ -49,7 +59,7 @@ export const store = async (req, res) => {
 				console.error(`doctor not found with id ${doctorId}`);
 				return res
 					.status(404)
-					.json({ success: false, message: "Tour not found" });
+					.json({ success: false, message: "doctor not found" });
 			}
 			await doctor.updateOne(
 				{
