@@ -1,5 +1,9 @@
 import { createClient } from "redis";
 
+
+/**
+ * THIS IS FOR DEVELOPMENT
+ */
 // async function initRedis() {
 // 	const redisClient = createClient();
 // 	redisClient.on("error", (err) => console.error("Redis Error:", err));
@@ -8,6 +12,10 @@ import { createClient } from "redis";
 // 	return redisClient;
 // }
 
+
+/**
+ * THIS IS FOR PRODUCTION
+ */
 let redisClient;
 
 export async function getRedisClient() {
