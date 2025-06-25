@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import { startSession } from "mongoose";
 import { errorHandler } from "../helpers/errorHandler.js";
 import emailService from "../Mail/emailService.js";
+import { invalidateCache } from "../helpers/invalidateCache.js";
 
 dotenv.config();
 
@@ -19,20 +20,18 @@ export const store = async (req, res) => {
 		const doctor = await user.findById(doctorId);
 		const role = req.user.role;
 		const { nurseId, priority, appointmentDate } = req.body;
-        const currentDate = new Date();
-		currentDate.setHours(0,0,0,0);
-        const appointDate = new Date(appointmentDate);
-			if(appointDate < currentDate){
-				await session.abortTransaction();
-				
-				return res.status(400).send({
-					success: false,
+		const currentDate = new Date();
+		currentDate.setHours(0, 0, 0, 0);
+		const appointDate = new Date(appointmentDate);
+		if (appointDate < currentDate) {
+			await session.abortTransaction();
+
+			return res.status(400).send({
+				success: false,
 				message: "Appointment date must be today or in the future.",
-				})
-			}
+			});
+		}
 		if (role !== "Admin" && role !== "Hospital") {
-			
-            
 			const appoint = new Appointment({
 				patientId,
 				nurseId,
@@ -64,6 +63,9 @@ export const store = async (req, res) => {
 				{ session }
 			);
 			await session.commitTransaction();
+
+			await invalidateCache([`/api/appointments`]);
+
 			res.status(200).json({
 				message: "Appointment booked successfully",
 				appointment: savedAppointment,
@@ -91,14 +93,17 @@ export const deleteAppointUser = async (req, res) => {
 		try {
 			session.startTransaction();
 
-			const appointment = await Appointment.findById(req.params.id);
+			const appointmentId = req.params.id;
+			const appointment = await Appointment.findById(appointmentId);
 			if (!appointment) {
 				await session.abortTransaction();
 				await session.endSession();
-				return res.status(404).json({ message: "Appointment not found" });
+				return res
+					.status(404)
+					.json({ message: "Appointment not found" });
 			}
 
-			await Appointment.findByIdAndDelete(req.params.id).session(session);
+			await Appointment.findByIdAndDelete(appointmentId).session(session);
 			await user.findByIdAndUpdate(
 				{ _id: userId },
 				{ $pull: { appointments: appointment } },
@@ -110,7 +115,15 @@ export const deleteAppointUser = async (req, res) => {
 				{ new: true, session }
 			);
 			await session.commitTransaction();
-			res.json({ message: "book deleted", data: [] });
+
+			await invalidateCache([
+				`/api/appointments/${appointmentId}`,
+				`/api/appointments`,
+			]);
+
+			return res
+				.status(200)
+				.json({ success: true, message: "book deleted" });
 		} catch (error) {
 			await session.abortTransaction();
 			console.error("Error deleting appointment:", error);
@@ -134,19 +147,22 @@ export const deleteAppointDoctor = async (req, res) => {
 	if (role === "Admin" || role === "Nurse" || role === "Doctor") {
 		const session = await startSession();
 		try {
+			const appointmentId = req.params.id;
 			session.startTransaction();
-			const appointment = await Appointment.findById(req.params.id).session(
-				session
-			);
+			const appointment = await Appointment.findById(
+				appointmentId
+			).session(session);
 			if (!appointment) {
 				await session.abortTransaction();
 				await session.endSession();
 
-				return res.status(404).json({ message: "Appointment not found" });
+				return res
+					.status(404)
+					.json({ message: "Appointment not found" });
 			}
 
 			// Delete the appointment
-			await Appointment.findByIdAndDelete(req.params.id).session(session);
+			await Appointment.findByIdAndDelete(appointmentId).session(session);
 
 			// Remove the appointment from the doctor's record
 			await user.findByIdAndUpdate(
@@ -190,6 +206,12 @@ export const deleteAppointDoctor = async (req, res) => {
 			);
 
 			await session.commitTransaction();
+
+			await invalidateCache([
+				`/api/appointments/${appointmentId}`,
+				`/api/appointments`,
+			]);
+
 			res.json({ message: "Appointment deleted successfully", data: [] });
 		} catch (error) {
 			await session.abortTransaction();
@@ -211,17 +233,18 @@ export const deleteAppointDoctor = async (req, res) => {
 export const update = async (req, res) => {
 	const role = req.user.role;
 	const userId = req.user._id;
-
 	if (role === "Patient") {
 		const session = await startSession();
 		try {
 			session.startTransaction();
 			const appointmentId = req.params.id;
-			const oldAppoint = await Appointment.findById(appointmentId).session(
-				session
-			);
+			const oldAppoint = await Appointment.findById(
+				appointmentId
+			).session(session);
 			if (!oldAppoint) {
-				return res.status(404).json({ message: "Appointment not found" });
+				return res
+					.status(404)
+					.json({ message: "Appointment not found" });
 			}
 
 			const doctorId = oldAppoint?.doctorId;
@@ -231,7 +254,7 @@ export const update = async (req, res) => {
 			const updatedAppointment = await Appointment.findByIdAndUpdate(
 				appointmentId,
 				/**{ $set: newAppointment },
-				{ new: true } // Return updated document*/
+				 { new: true } // Return updated document*/
 				newAppointment
 			).session(session);
 
@@ -265,6 +288,12 @@ export const update = async (req, res) => {
 				);
 			}
 			await session.commitTransaction();
+
+			await invalidateCache([
+				`/api/appointments/${appointmentId}`,
+				`/api/appointments`,
+			]);
+
 			res.json({
 				message: "Appointment updated successfully",
 				data: updatedAppointment,
@@ -290,7 +319,7 @@ export const index = async (req, res, next) => {
 	if (role === "Admin") {
 		try {
 			const appointments = await Appointment.find();
-				
+
 			if (appointments.length === 0) {
 				return next(errorHandler(404, "There are no appointments"));
 			}
@@ -334,7 +363,9 @@ export const index = async (req, res, next) => {
 
 			// Check if no appointments found
 			if (appointments.length === 0) {
-				return res.status(404).json({ message: "No appointments found" });
+				return res
+					.status(404)
+					.json({ message: "No appointments found" });
 			}
 
 			res.json({
