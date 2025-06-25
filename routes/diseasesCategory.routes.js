@@ -8,9 +8,10 @@ import {
 } from "../controllers/diseasesCategory.controller.js";
 import authenticateJWT from "../middlewares/auth.js";
 const router = express.Router();
+import cache from "../middlewares/cache.js";
 
-router.get("/", authenticateJWT, index);
-router.get("/:id", authenticateJWT, show);
+router.get("/", authenticateJWT, cache(600), index);
+router.get("/:id", authenticateJWT, cache(600), show);
 router.post("/", authenticateJWT, store);
 router.patch("/:id", authenticateJWT, update);
 router.delete("/:id", authenticateJWT, destroy);

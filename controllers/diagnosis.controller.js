@@ -1,4 +1,6 @@
 import { errorHandler } from "../helpers/errorHandler.js";
+import { invalidateDiagnosisCache } from "../helpers/invalidateDiagnosesCache.js";
+import { invalidateCache } from "../helpers/invalidateCache.js";
 import Diagnosis from "../models/diagnosis.model.js";
 import User from "../models/userModel.js";
 
@@ -150,6 +152,9 @@ export const addDiagnosis = async (req, res, next) => {
 			notes,
 		});
 
+		await invalidateCache([`/api/diagnosis/${patientId}/all`]);
+		await invalidateDiagnosisCache(patientId);
+
 		return res.status(201).json({
 			success: true,
 			message: "new diagnosis added to the patient",
@@ -219,6 +224,9 @@ export const updateDiagnosis = async (req, res, next) => {
 			.populate("medications")
 			.lean();
 
+		await invalidateDiagnosisCache(patientId, diagnosisId);
+		await invalidateCache([`/api/diagnosis/${patientId}/all`]);
+
 		return res.status(200).json({
 			success: true,
 			message: "Diagnosis updated",
@@ -239,15 +247,18 @@ export const deleteDiagnosis = async (req, res, next) => {
 		)
 			return next(errorHandler(401, "unauthorized operation"));
 
-		const { diagnosisId } = req.params;
-		if (!diagnosisId)
-			return next(errorHandler(400, "missing diagnosis ID"));
+		const { patientId, diagnosisId } = req.params;
+		if (!patientId || !diagnosisId)
+			return next(errorHandler(400, "missing patient or diagnosis ID"));
 
 		const diagnosis = await Diagnosis.findById(diagnosisId).lean();
 		if (!diagnosis)
 			return next(errorHandler(404, "Diagnosis doesn't exist"));
 
 		await Diagnosis.findByIdAndDelete(diagnosisId).lean();
+
+		await invalidateDiagnosisCache(patientId, diagnosisId);
+		await invalidateCache([`/api/diagnosis/${patientId}/all`]);
 
 		return res.status(200).json({
 			success: true,
