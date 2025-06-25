@@ -88,24 +88,34 @@ export const show = async (req, res, next) => {
 	}
 };
 export const store = async (req, res, next) => {
-	const { name, description, rank, diseasecategoryId } = req.body;
-	if (
-		name == null ||
-		description == null ||
-		rank == null ||
-		diseasecategoryId == null
-	) {
-		return next(errorHandler(400, "All required fields must be provided."));
-	}
-	if (description.length > 400) {
-		return next(
-			errorHandler(
-				422,
-				'The field "description" exceeds the maximum length of 400 characters.'
-			)
-		);
+	const user = req.user;
+
+	if (user.role !== "Admin" && user.role !== "Doctor") {
+		return res.status(403).json({
+			success: false,
+			message: "Un-authorized operation",
+		});
 	}
 	try {
+		const { name, description, rank, diseasecategoryId } = req.body;
+		if (
+			name == null ||
+			description == null ||
+			rank == null ||
+			diseasecategoryId == null
+		) {
+			return next(
+				errorHandler(400, "All required fields must be provided.")
+			);
+		}
+		if (description.length > 400) {
+			return next(
+				errorHandler(
+					422,
+					'The field "description" exceeds the maximum length of 400 characters.'
+				)
+			);
+		}
 		const newDiesases = await DISEASES({
 			name,
 			description,
@@ -139,11 +149,19 @@ export const store = async (req, res, next) => {
 };
 
 export const update = async (req, res, next) => {
-	const { id } = req.params;
-	if (id == null) {
-		return next(errorHandler(400, "The 'id' parameter is required."));
+	const user = req.user;
+
+	if (user.role !== "Admin" && user.role !== "Doctor") {
+		return res.status(403).json({
+			success: false,
+			message: "Un-authorized operation",
+		});
 	}
 	try {
+		const { id } = req.params;
+		if (id == null) {
+			return next(errorHandler(400, "The 'id' parameter is required."));
+		}
 		const result = await DISEASES.findOneAndUpdate({ _id: id }, req.body, {
 			new: true,
 		});
@@ -167,11 +185,19 @@ export const update = async (req, res, next) => {
 };
 
 export const destroy = async (req, res, next) => {
-	const { id } = req.params;
-	if (id == null) {
-		return next(errorHandler(400, "The 'id' parameter is required."));
+	const user = req.user;
+
+	if (user.role !== "Admin" && user.role !== "Doctor") {
+		return res.status(403).json({
+			success: false,
+			message: "Un-authorized operation",
+		});
 	}
 	try {
+		const { id } = req.params;
+		if (id == null) {
+			return next(errorHandler(400, "The 'id' parameter is required."));
+		}
 		const diseases = await DISEASES.findById(id);
 		if (!diseases) {
 			return res.status(404).json({ message: "Diseases not found" });
