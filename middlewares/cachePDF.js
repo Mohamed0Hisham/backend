@@ -33,6 +33,7 @@ const cachePDF = (keyGenerator, ttl = 3600) => {
 				if (chunk) chunks.push(Buffer.from(chunk));
 				const finalBuffer = Buffer.concat(chunks);
 				redisClient.setEx(key, ttl, finalBuffer.toString("base64"));
+				console.log("PDF cached!");
 				return origEnd(chunk);
 			};
 
