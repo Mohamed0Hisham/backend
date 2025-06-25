@@ -72,19 +72,29 @@ export const show = async (req, res, next) => {
 };
 
 export const store = async (req, res, next) => {
-	const { name, description, rank } = req.body;
-	if (name == null || description == null || rank == null) {
-		return next(errorHandler(400, "All required fields must be provided."));
-	}
-	if (description.length > 400) {
-		return next(
-			errorHandler(
-				422,
-				'The field "description" exceeds the maximum length of 400 characters.'
-			)
-		);
+	const user = req.user;
+
+	if (user.role !== "Admin" && user.role !== "Doctor") {
+		return res.status(403).json({
+			success: false,
+			message: "Un-authorized operation",
+		});
 	}
 	try {
+		const { name, description, rank } = req.body;
+		if (name == null || description == null || rank == null) {
+			return next(
+				errorHandler(400, "All required fields must be provided.")
+			);
+		}
+		if (description.length > 400) {
+			return next(
+				errorHandler(
+					422,
+					'The field "description" exceeds the maximum length of 400 characters.'
+				)
+			);
+		}
 		const newDiesasesCategory = await new DiseasesCategory({
 			name,
 			description,
@@ -117,11 +127,19 @@ export const store = async (req, res, next) => {
 };
 
 export const update = async (req, res, next) => {
-	const { id } = req.params;
-	if (id == null) {
-		return next(errorHandler(400, "The 'id' parameter is required."));
+	const user = req.user;
+
+	if (user.role !== "Admin" && user.role !== "Doctor") {
+		return res.status(403).json({
+			success: false,
+			message: "Un-authorized operation",
+		});
 	}
 	try {
+		const { id } = req.params;
+		if (id == null) {
+			return next(errorHandler(400, "The 'id' parameter is required."));
+		}
 		const result = await DiseasesCategory.findOneAndUpdate(
 			{
 				_id: id,
@@ -150,11 +168,21 @@ export const update = async (req, res, next) => {
 };
 
 export const destroy = async (req, res, next) => {
-	const { id } = req.params;
-	if (id == null) {
-		return next(errorHandler(400, "All required fields must be provided."));
+	const user = req.user;
+
+	if (user.role !== "Admin" && user.role !== "Doctor") {
+		return res.status(403).json({
+			success: false,
+			message: "Un-authorized operation",
+		});
 	}
 	try {
+		const { id } = req.params;
+		if (id == null) {
+			return next(
+				errorHandler(400, "All required fields must be provided.")
+			);
+		}
 		const diseasesCategories = await DiseasesCategory.findById(id);
 		if (!diseasesCategories) {
 			return res
