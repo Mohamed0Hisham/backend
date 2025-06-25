@@ -1,6 +1,7 @@
-import initRedis from "../helpers/redisClient.js";
-
-const redisClient = await initRedis();
+// import initRedis from "../helpers/redisClient.js";
+// const redisClient = await initRedis();
+import { getRedisClient } from "../helpers/redisClient.js";
+const redisClient = await getRedisClient();
 
 const cache = (ttlsec = 300) => {
 	return async function cacheing(req, res, next) {

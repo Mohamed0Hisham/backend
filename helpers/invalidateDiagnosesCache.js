@@ -1,6 +1,7 @@
-import initRedis from "./redisClient.js";
-
-const redisClient = await initRedis();
+// import initRedis from "./redisClient.js";
+// const redisClient = await initRedis();
+import { getRedisClient } from "../helpers/redisClient.js";
+const redisClient = await getRedisClient();
 
 export const invalidateDiagnosisCache = async (
 	patientId,
