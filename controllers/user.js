@@ -205,15 +205,25 @@ export const index = async (req, res, next) => {
     }
 
     const totalUsers = await userModel.countDocuments();
+    const totalAdmin = await userModel.countDocuments({ role: "Admin" });
+    const totalDoctors = await userModel.countDocuments({ role: "Doctor" });
+    const totalPatients = await userModel.countDocuments({ role: "Patient" });
+    const totalHospitals = await userModel.countDocuments({ role: "Hospital" });
+    const totalNurses = await userModel.countDocuments({ role: "Nurse" });
 
     const totalPages = Math.ceil(totalUsers / limit);
 
     // Return the response including pagination info
     return res.status(200).json({
-      data: users,
-      msg: "There are some users",
       success: true,
+      msg: "There are some users",
       totalUsers: totalUsers,
+      totalAdmin: totalAdmin,
+      totalDoctors: totalDoctors,
+      totalPatients: totalPatients,
+      totalHospitals: totalHospitals,
+      totalNurses: totalNurses,
+      data: users,
       totalPages: totalPages,
       currentPage: page,
     });
@@ -295,34 +305,42 @@ export const update = async (req, res, next) => {
 
 export const DoctorNames = async (req, res, next) => {
   try {
-    const doctorNames = await userModel.aggregate([
-      { $match: { role: "Doctor" } },
-      {
-        $project: {
-          name: 1,
-          phone: 1,
-          gender: 1,
-          city: 1,
-          country: 1,
-          ImgUrl: 1,
-          specialization: 1,
-          rate: 1,
-          Url: {
-            $concat: [
-              "http://localhost:3000/doctor/profile?name=",
-              {
-                $replaceAll: {
-                  input: "$name",
-                  find: " ",
-                  replacement: "-",
+    const page = parseInt(req.query.page) || 1;
+    const limit = 10;
+    const skip = (page - 1) * limit;
+    const doctorNames = await userModel
+      .aggregate([
+        { $match: { role: "Doctor" } },
+        {
+          $project: {
+            name: 1,
+            phone: 1,
+            gender: 1,
+            city: 1,
+            country: 1,
+            ImgUrl: 1,
+            specialization: 1,
+            rate: 1,
+            Url: {
+              $concat: [
+                "http://localhost:5173/doctor/profile?name=",
+                {
+                  $replaceAll: {
+                    input: "$name",
+                    find: " ",
+                    replacement: "-",
+                  },
                 },
-              },
-            ],
+              ],
+            },
           },
         },
-      },
-    ]);
+      ])
+      .skip(skip)
+      .limit(limit);
+    const totalDoctors = await userModel.countDocuments({ role: "Doctor" });
 
+    const totalPages = Math.ceil(totalDoctors / limit);
     if (doctorNames.length === 0) {
       return next(errorHandler(404, "There are no doctors"));
     }
@@ -331,6 +349,10 @@ export const DoctorNames = async (req, res, next) => {
       message: "Doctors' names are retrieved successfully",
       success: true,
       data: doctorNames,
+      totalDoctors: totalDoctors,
+      totalPages: totalPages,
+      currentPage: page,
+      limit: limit,
     });
   } catch (error) {
     return next(
@@ -345,38 +367,48 @@ export const DoctorNames = async (req, res, next) => {
 
 export const HospitalNames = async (req, res, next) => {
   try {
-    const hospitalNames = await userModel.aggregate([
-      { $match: { role: "Hospital" } },
-      {
-        $project: {
-          name: 1,
-          phone: 1,
-          city: 1,
-          country: 1,
-          ImgUrl: 1,
-          rate: 1,
-          dateOfBirth: 1,
-          Url: {
-            $concat: [
-              "http://localhost:3000/hospital/profile?name=",
-              {
-                $replaceAll: {
-                  input: "$name",
-                  find: " ",
-                  replacement: "-",
+    const page = parseInt(req.query.page) || 1;
+    const limit = 10;
+    const skip = (page - 1) * limit;
+
+    const hospitalNames = await userModel
+      .aggregate([
+        { $match: { role: "Hospital" } },
+        {
+          $project: {
+            name: 1,
+            phone: 1,
+            city: 1,
+            country: 1,
+            ImgUrl: 1,
+            rate: 1,
+            dateOfBirth: 1,
+            Url: {
+              $concat: [
+                "http://localhost:5173/hospital/profile?name=",
+                {
+                  $replaceAll: {
+                    input: "$name",
+                    find: " ",
+                    replacement: "-",
+                  },
                 },
-              },
-            ],
+              ],
+            },
           },
         },
-      },
-    ]);
+      ])
+      .skip(skip)
+      .limit(limit);
+
+    const totalHospitals = await userModel.countDocuments({ role: "Hospital" });
+    const totalPages = Math.ceil(totalHospitals / limit);
 
     if (hospitalNames.length === 0) {
       return next(errorHandler(404, "There are no Hospitals"));
     }
 
-    // Map over each hospital to format date and fields
+    // Format hospital date fields
     const formattedHospitals = hospitalNames.map((hospital) => {
       const establishedDate = hospital.dateOfBirth
         ? format(new Date(hospital.dateOfBirth), "dd-MM-yyyy")
@@ -398,6 +430,10 @@ export const HospitalNames = async (req, res, next) => {
       message: "Hospital names are retrieved successfully",
       success: true,
       data: formattedHospitals,
+      totalHospitals: totalHospitals,
+      totalPages: totalPages,
+      currentPage: page,
+      limit: limit,
     });
   } catch (error) {
     return next(

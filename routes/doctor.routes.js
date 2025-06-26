@@ -9,7 +9,7 @@ import {
 import cache from "../middlewares/cache.js";
 const router = express.Router();
 
-router.get("/", authenticateJWT, cache(600), show);
+router.get("/"  , cache(600), show);
 
 router.post("/", authenticateJWT, store);
 

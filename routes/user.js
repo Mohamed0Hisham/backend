@@ -16,7 +16,7 @@ router.get("/one", authenticateJWT, cache(600), userController.show);
 router.post("/refresh", userController.refresh);
 router.get("/doctors", userController.DoctorNames);
 router.get("/hospitals", userController.HospitalNames);
-router.get("/hospital", authenticateJWT, userController.showHospital);
+router.get("/hospital", userController.showHospital);
 router.patch(
   "/",
   upload.single("image"),
