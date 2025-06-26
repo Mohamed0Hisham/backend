@@ -1,17 +1,17 @@
 import express from "express";
 import authenticateJWT from "../middlewares/auth.js";
 import {
-	destroy,
-	show,
-	store,
-	update,
+  destroy,
+  show,
+  store,
+  update,
 } from "../controllers/doctor.controller.js";
 import cache from "../middlewares/cache.js";
 const router = express.Router();
 
-router.get("/", authenticateJWT, cache(600), show);
+router.get("/"  , cache(600), show);
 
-router.post("/", store);
+router.post("/", authenticateJWT, store);
 
 router.put("/:id", authenticateJWT, update);
 
