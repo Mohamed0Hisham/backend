@@ -11,14 +11,10 @@ const cacheForUser = (ttlsec = 300) => {
 			const cached = await redisClient.get(key);
 
 			if (cached) {
-				console.log(
-					`[Redis] Cache hit for ${req.user._id}${req.originalUrl}`
-				);
-				return res.status(200).json({
-					success: true,
-					message: `cache hit for ${req.user._id}${req.originalUrl}`,
-					data: JSON.parse(cached),
-				});
+				// console.log(
+				// 	`[Redis] Cache hit for ${req.user._id}${req.originalUrl}`
+				// );
+				return res.status(200).json(JSON.parse(cached));
 			}
 
 			const originalJson = res.json.bind(res);
