@@ -12,6 +12,7 @@ import {
   generateRefreshToken,
   verifyRefreshToken,
 } from "../controllers/token.js";
+import { format } from "date-fns";
 
 dotenv.config();
 
@@ -294,26 +295,40 @@ export const update = async (req, res, next) => {
 
 export const DoctorNames = async (req, res, next) => {
   try {
-    const doctorNames = await userModel
-      .find(
-        { role: "Doctor" },
-        {
+    const doctorNames = await userModel.aggregate([
+      { $match: { role: "Doctor" } },
+      {
+        $project: {
           name: 1,
           phone: 1,
+          gender: 1,
           city: 1,
           country: 1,
           ImgUrl: 1,
           specialization: 1,
           rate: 1,
-          _id: 1,
-        }
-      )
-      .lean();
+          Url: {
+            $concat: [
+              "http://localhost:3000/doctor/profile?name=",
+              {
+                $replaceAll: {
+                  input: "$name",
+                  find: " ",
+                  replacement: "-",
+                },
+              },
+            ],
+          },
+        },
+      },
+    ]);
+
     if (doctorNames.length === 0) {
-      return next(errorHandler(404, "There are no doctors "));
+      return next(errorHandler(404, "There are no doctors"));
     }
+
     return res.status(200).json({
-      message: "Doctors' names are retrived sucessfully",
+      message: "Doctors' names are retrieved successfully",
       success: true,
       data: doctorNames,
     });
@@ -321,10 +336,132 @@ export const DoctorNames = async (req, res, next) => {
     return next(
       errorHandler(
         500,
-        "An error occurred while updating the Disease. Please try again later." +
+        "An error occurred while retrieving the doctors. Please try again later. " +
           error
       )
     );
+  }
+};
+
+export const HospitalNames = async (req, res, next) => {
+  try {
+    const hospitalNames = await userModel.aggregate([
+      { $match: { role: "Hospital" } },
+      {
+        $project: {
+          name: 1,
+          phone: 1,
+          city: 1,
+          country: 1,
+          ImgUrl: 1,
+          rate: 1,
+          dateOfBirth: 1,
+          Url: {
+            $concat: [
+              "http://localhost:3000/hospital/profile?name=",
+              {
+                $replaceAll: {
+                  input: "$name",
+                  find: " ",
+                  replacement: "-",
+                },
+              },
+            ],
+          },
+        },
+      },
+    ]);
+
+    if (hospitalNames.length === 0) {
+      return next(errorHandler(404, "There are no Hospitals"));
+    }
+
+    // Map over each hospital to format date and fields
+    const formattedHospitals = hospitalNames.map((hospital) => {
+      const establishedDate = hospital.dateOfBirth
+        ? format(new Date(hospital.dateOfBirth), "dd-MM-yyyy")
+        : null;
+
+      return {
+        name: hospital.name,
+        phone: hospital.phone,
+        city: hospital.city,
+        country: hospital.country,
+        ImgUrl: hospital.ImgUrl,
+        rate: hospital.rate,
+        Url: hospital.Url,
+        Established: establishedDate,
+      };
+    });
+
+    return res.status(200).json({
+      message: "Hospital names are retrieved successfully",
+      success: true,
+      data: formattedHospitals,
+    });
+  } catch (error) {
+    return next(
+      errorHandler(
+        500,
+        "An error occurred while retrieving the Hospitals. Please try again later. " +
+          error
+      )
+    );
+  }
+};
+
+export const showHospital = async (req, res, next) => {
+  try {
+    if (!req.query.name) {
+      return res.redirect("/api/users/hospitals");
+    }
+
+    const HospitalName = req.query.name.replace(/-/g, " ");
+    const hospital = await userModel
+      .findOne(
+        {
+          role: "Hospital",
+          name: HospitalName,
+        },
+        {
+          name: 1,
+          email: 1,
+          phone: 1,
+          city: 1,
+          country: 1,
+          rate: 1,
+          ImgUrl: 1,
+          dateOfBirth: 1, // or 'establishedDate' if applicable
+        }
+      )
+      .lean();
+
+    if (!hospital) {
+      return next(errorHandler(404, "Hospital not found"));
+    }
+
+    const Established = hospital.dateOfBirth
+      ? format(new Date(hospital.dateOfBirth), "dd-MM-yyyy")
+      : "N/A";
+
+    const formatted = {
+      name: hospital.name,
+      email: hospital.email,
+      phone: hospital.phone,
+      city: hospital.city,
+      country: hospital.country,
+      EstablishedDate: Established,
+      rate: hospital.rate,
+      ImgUrl: hospital.ImgUrl,
+    };
+
+    return res.status(200).json({
+      success: true,
+      message: "Hospital profile fetched",
+      hospital: formatted,
+    });
+  } catch (error) {
+    return next(errorHandler(500, error.message));
   }
 };
 
