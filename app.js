@@ -100,7 +100,7 @@ mongoose
 		dbName: process.env.DB_NAME,
 	})
 	.then(() => {
-		app.listen(process.env.PORT || 3000, () => {
+		app.listen(process.env.PORT || 8080, () => {
 			console.log("database is connected ✅");
 			console.log("server is running ✅");
 		});
