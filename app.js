@@ -95,16 +95,21 @@ app.use((err, req, res, next) => {
 	});
 });
 
-mongoose
-	.connect(process.env.DB_URL, {
-		dbName: process.env.DB_NAME,
-	})
-	.then(() => {
-		app.listen(process.env.PORT || 8080, () => {
+// mongoose
+// 	.connect(process.env.DB_URL, {
+// 		dbName: process.env.DB_NAME,
+// 	})
+// 	.then(() => {
+// 		app.listen(process.env.PORT || 8080, () => {
+// 			console.log("database is connected ✅");
+// 			console.log("server is running ✅");
+// 		});
+// 	})
+// 	.catch((error) => {
+// 		console.log("Connection Failed" + " >>  " + error.message);
+// 	});
+
+	app.listen(process.env.PORT || 8080, () => {
 			console.log("database is connected ✅");
 			console.log("server is running ✅");
 		});
-	})
-	.catch((error) => {
-		console.log("Connection Failed" + " >>  " + error.message);
-	});
