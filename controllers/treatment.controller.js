@@ -1,6 +1,7 @@
 import TREATMENT from "../models/treatment.model.js";
 import { errorHandler } from "../helpers/errorHandler.js";
 import mongoose from "mongoose";
+import { invalidateCache } from "../helpers/invalidateCache.js";
 
 export const index = async (req, res, next) => {
 	try {
@@ -68,26 +69,38 @@ export const show = async (req, res, next) => {
 };
 
 export const store = async (req, res, next) => {
-	const { diseaseID, name, description } = req.body;
-	if (name == null || description == null || diseaseID == null) {
-		return next(errorHandler(400, "All required fields must be provided."));
-	}
-	if (description.length > 500) {
-		return next(
-			errorHandler(
-				422,
-				'The field "description" exceeds the maximum length of 400 characters.'
-			)
-		);
+	const user = req.user;
+
+	if (user.role !== "Admin" && user.role !== "Doctor") {
+		return res.status(403).json({
+			success: false,
+			message: "Un-authorized operation",
+		});
 	}
 
 	try {
+		const { diseaseID, name, description } = req.body;
+		if (name == null || description == null || diseaseID == null) {
+			return next(
+				errorHandler(400, "All required fields must be provided.")
+			);
+		}
+		if (description.length > 500) {
+			return next(
+				errorHandler(
+					422,
+					'The field "description" exceeds the maximum length of 400 characters.'
+				)
+			);
+		}
 		const newTreatment = new TREATMENT({
 			diseaseID,
 			name,
 			description,
 		});
 		const result = await newTreatment.save();
+
+		await invalidateCache([`/api/treatments/`]);
 
 		return res.status(201).json({
 			data: result,
@@ -112,14 +125,25 @@ export const store = async (req, res, next) => {
 };
 
 export const update = async (req, res, next) => {
-	const { id } = req.params;
-	if (id == null) {
-		return next(errorHandler(400, "The 'id' parameter is required."));
+	const user = req.user;
+
+	if (user.role !== "Admin" && user.role !== "Doctor") {
+		return res.status(403).json({
+			success: false,
+			message: "Un-authorized operation",
+		});
 	}
 	try {
+		const { id } = req.params;
+		if (id == null) {
+			return next(errorHandler(400, "The 'id' parameter is required."));
+		}
 		const result = await TREATMENT.findOneAndUpdate({ _id: id }, req.body, {
 			new: true,
 		});
+
+		await invalidateCache([`/api/treatments/`, `/api/treatments/${id}`]);
+
 		return res.status(200).json({
 			data: result,
 			msg: "The Treatment has successfully updated",
@@ -137,15 +161,28 @@ export const update = async (req, res, next) => {
 };
 
 export const destroy = async (req, res, next) => {
-	const { id } = req.params;
-	if (id == null) {
-		return next(errorHandler(400, "All required fields must be provided."));
+	const user = req.user;
+
+	if (user.role !== "Admin" && user.role !== "Doctor") {
+		return res.status(403).json({
+			success: false,
+			message: "Un-authorized operation",
+		});
 	}
 	try {
+		const { id } = req.params;
+		if (id == null) {
+			return next(
+				errorHandler(400, "All required fields must be provided.")
+			);
+		}
 		const treatment = await TREATMENT.findById(req.params.id);
 		if (!treatment) {
 			return res.status(404).json({ message: "Treatment not found" });
 		}
+
+		await invalidateCache([`/api/treatments/`, `/api/treatments/${id}`]);
+
 		const result = await TREATMENT.findOneAndDelete({ _id: id });
 		return res.status(204).json({
 			msg: "The Treatment has been successfully deleted",

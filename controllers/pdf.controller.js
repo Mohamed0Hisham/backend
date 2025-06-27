@@ -32,6 +32,8 @@ export const printAllDiagnoses = async (req, res, next) => {
 		);
 		PDFDocument.pipe(res);
 	} catch (error) {
+		console.log("error stack 👉", error.stack);
+		console.log("error message 👉", error.message);
 		next(error);
 	}
 };

@@ -7,190 +7,184 @@ import emailService from "../Mail/emailService.js";
 import { uploadImg, deleteImg } from "../helpers/images.js";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
-import { generateAccessToken, generateRefreshToken ,verifyRefreshToken} from "../controllers/token.js";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyRefreshToken,
+} from "../controllers/token.js";
+import { format } from "date-fns";
 
 dotenv.config();
 
 export const register = async (req, res, next) => {
+  try {
+    const { name, gender, email, password, phone, city, country, dateOfBirth } =
+      req.body;
 
-	try {
-		const {
-			name,
-			gender,
-			email,
-			password,
-			phone,
-			city,
-			country,
-			dateOfBirth,
-		} = req.body;
+    const missingFields = [];
 
-		const missingFields = [];
+    if (!name) missingFields.push("name");
+    if (!gender) missingFields.push("gender");
+    if (!email) missingFields.push("email");
+    if (!password) missingFields.push("password");
+    if (!phone) missingFields.push("phone");
+    if (!city) missingFields.push("city");
+    if (!country) missingFields.push("country");
+    if (!dateOfBirth) missingFields.push("dateOfBirth");
 
-		if (!name) missingFields.push("name");
-		if (!gender) missingFields.push("gender");
-		if (!email) missingFields.push("email");
-		if (!password) missingFields.push("password");
-		if (!phone) missingFields.push("phone");
-		if (!city) missingFields.push("city");
-		if (!country) missingFields.push("country");
-		if (!dateOfBirth) missingFields.push("dateOfBirth");
+    if (missingFields.length > 0) {
+      return next(
+        errorHandler(
+          400,
+          `Missing required fields: ${missingFields.join(", ")}`
+        )
+      );
+    }
 
-		if (missingFields.length > 0) {
-			return next(
-				errorHandler(
-					400,
-					`Missing required fields: ${missingFields.join(", ")}`
-				)
-			);
-		}
+    const existingUser = await userModel.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({ message: "This email already exists" });
+    }
 
-		const existingUser = await userModel.findOne({ email });
-		if (existingUser) {
-			return res
-				.status(409)
-				.json({ message: "This email already exists" });
-		}
+    if (req.body.role) {
+      return next(
+        errorHandler(
+          401,
+          "Unauthorized operation, you can't set role for yourself"
+        )
+      );
+    }
 
-		if (req.body.role) {
-			return next(
-				errorHandler(
-					401,
-					"Unauthorized operation, you can't set role for yourself"
-				)
-			);
-		}
+    const newUser = new userModel(req.body);
+    const hashedPassword = await bcrypt.hash(req.body.password, 10);
+    newUser.password = hashedPassword;
 
-		const newUser = new userModel(req.body);
-		const hashedPassword = await bcrypt.hash(req.body.password, 10);
-		newUser.password = hashedPassword;
+    const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, {
+      expiresIn: "24h",
+    });
 
-		const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, {
-			expiresIn: "24h",
-		});
+    const user = await newUser.save();
+    if (!user) {
+      return res.status(500).json({ message: "User creation failed" });
+    }
 
-		const user = await newUser.save();
-		if (!user) {
-			return res.status(500).json({ message: "User creation failed" });
-		}
-
-		await emailService.confirmEmail(email, token);
-		return res
-			.status(201)
-			.json({ message: "confirmation email has been sent" });
-	} catch (error) {
-		console.error(error.stack);
-		return res.status(500).json({
-			message:
-				"An error occurred while registering the user " + error.message,
-		});
-	}
+    await emailService.confirmEmail(email, token);
+    return res
+      .status(201)
+      .json({ message: "confirmation email has been sent" });
+  } catch (error) {
+    console.error(error.stack);
+    return res.status(500).json({
+      message: "An error occurred while registering the user " + error.message,
+    });
+  }
 };
 
 export const login = async (req, res) => {
-	try {
-		const user = await userModel.findOne({ email: req.body.email });
-		if (!user) {
-			return res
-				.status(401)
-				.json({ message: "Invalid email or password" });
-		}
+  try {
+    const user = await userModel.findOne({ email: req.body.email });
+    if (!user) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
 
-		if (!user.isVerified) {
-			return res
-				.status(401)
-				.json({ message: "unconfirmed email, check your email" });
-		}
+    if (!user.isVerified) {
+      return res
+        .status(401)
+        .json({ message: "unconfirmed email, check your email" });
+    }
 
-		const passwordCheck = await user.comparePassword(req.body.password);
-		if (!passwordCheck) {
-			return res
-				.status(401)
-				.json({ message: "Invalid email or password" });
-		}
-		const accessToken = generateAccessToken(user);
-		const refreshToken = generateRefreshToken(user);
+    const passwordCheck = await user.comparePassword(req.body.password);
+    if (!passwordCheck) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
 
-		user.refreshTokens.push(refreshToken);
-		await user.save();
+    user.refreshTokens.push(refreshToken);
+    await user.save();
 
-		/**if (!accessToken)
+    /**if (!accessToken)
 			return res
 				.status(500)
 				.json({ success: false, message: "failed to generate token" });*/
 
-        res.cookie("refreshToken",refreshToken,{
-			httpOnly : true ,
-			secure: process.env.NODE_ENV === 'production',
-			maxAge : 60 * 60 * 1000
-		})
-		res.cookie("accessToken",accessToken,{
-			httpOnly : true ,
-			secure: process.env.NODE_ENV === 'production',
-			maxAge : 30 *24 * 60 * 60 * 1000
-		})
-		
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 60 * 1000,
+    });
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+    });
 
-		res.header("accessToken", accessToken);
-		return res.status(200).json({
-			accessToken,
-			refreshToken,
-			//user: { id: user._id, name: user.name, email: user.email, role: user.role }
-		});
-	} catch (error) {
-		console.error(error);
-		return res
-			.status(500)
-			.json({ message: "An error occurred while logging in" });
-	}
+    res.header("accessToken", accessToken);
+    return res.status(200).json({
+      Role: user.role,
+      accessToken,
+      refreshToken,
+      //user: { id: user._id, name: user.name, email: user.email, role: user.role }
+    });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ message: "An error occurred while logging in" });
+  }
 };
 export const logout = async (req, res) => {
-    try {
-        const refreshToken = req.cookies.refreshToken; // Access the refresh token correctly
-        if (!refreshToken) {
-            return res.status(404).json({ message: "No refresh token found, logout denied" });
-        }
-        const user = await userModel.findOne({ refreshTokens: refreshToken });
-        if (user) {
-            user.refreshTokens = user.refreshTokens.filter(token => token !== refreshToken);
-            await user.save();
-        }
-        // Clear cookies
-        res.clearCookie("accessToken");
-        res.clearCookie("refreshToken");
-        return res.status(200).json({ message: "Logged out successfully" });
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: "Server error during logout", error });
+  try {
+    const refreshToken = req.cookies.refreshToken; // Access the refresh token correctly
+    if (!refreshToken) {
+      return res
+        .status(404)
+        .json({ message: "No refresh token found, logout denied" });
     }
+    const user = await userModel.findOne({ refreshTokens: refreshToken });
+    if (user) {
+      user.refreshTokens = user.refreshTokens.filter(
+        (token) => token !== refreshToken
+      );
+      await user.save();
+    }
+    // Clear cookies
+    res.clearCookie("accessToken");
+    res.clearCookie("refreshToken");
+    return res.status(200).json({ message: "Logged out successfully" });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ message: "Server error during logout", error });
+  }
 };
-export const refresh = async(req,res)=>{
-	try {
-	const {refreshToken} = req.cookies
-	if(!refreshToken){
-		return res.status(401).json({ message: 'No refresh token provided' });
-	}
-	const decodedToken = verifyRefreshToken(refreshToken)
-	const user = await userModel.findById(decodedToken._id)
+export const refresh = async (req, res) => {
+  try {
+    const { refreshToken } = req.cookies;
+    if (!refreshToken) {
+      return res.status(401).json({ message: "No refresh token provided" });
+    }
+    const decodedToken = verifyRefreshToken(refreshToken);
+    const user = await userModel.findById(decodedToken._id);
 
-
-	if(!user || !user.refreshTokens.includes(refreshToken)){
-		return res.status(403).json({ message: 'Invalid refresh token' });
-	}
-	const newAccessToken = generateAccessToken(user);
-	res.cookie("newAccessToken",newAccessToken,{
-		httpOnly: true,
-		secure: process.env.NODE_ENV === 'production',
-		maxAge: 60 * 60 * 1000
-	})
-	return res.status(200).json({ newAccessToken, message: " successfully" });
-} catch (error) {
-	console.error(error);
-	return res.status(500).json({ message: "Server error during refreshing", error });
-
-}
-	
-}
+    if (!user || !user.refreshTokens.includes(refreshToken)) {
+      return res.status(403).json({ message: "Invalid refresh token" });
+    }
+    const newAccessToken = generateAccessToken(user);
+    res.cookie("newAccessToken", newAccessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 60 * 1000,
+    });
+    return res.status(200).json({ newAccessToken, message: " successfully" });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ message: "Server error during refreshing", error });
+  }
+};
 export const index = async (req, res, next) => {
   try {
     // Check if the user is an Admin
@@ -211,15 +205,25 @@ export const index = async (req, res, next) => {
     }
 
     const totalUsers = await userModel.countDocuments();
+    const totalAdmin = await userModel.countDocuments({ role: "Admin" });
+    const totalDoctors = await userModel.countDocuments({ role: "Doctor" });
+    const totalPatients = await userModel.countDocuments({ role: "Patient" });
+    const totalHospitals = await userModel.countDocuments({ role: "Hospital" });
+    const totalNurses = await userModel.countDocuments({ role: "Nurse" });
 
     const totalPages = Math.ceil(totalUsers / limit);
 
     // Return the response including pagination info
     return res.status(200).json({
-      data: users,
-      msg: "There are some users",
       success: true,
+      msg: "There are some users",
       totalUsers: totalUsers,
+      totalAdmin: totalAdmin,
+      totalDoctors: totalDoctors,
+      totalPatients: totalPatients,
+      totalHospitals: totalHospitals,
+      totalNurses: totalNurses,
+      data: users,
       totalPages: totalPages,
       currentPage: page,
     });
@@ -301,37 +305,199 @@ export const update = async (req, res, next) => {
 
 export const DoctorNames = async (req, res, next) => {
   try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = 10;
+    const skip = (page - 1) * limit;
     const doctorNames = await userModel
-      .find(
-        { role: "Doctor" },
+      .aggregate([
+        { $match: { role: "Doctor" } },
         {
-          name: 1,
-          phone: 1,
-          city: 1,
-          country: 1,
-          ImgUrl: 1,
-          specialization: 1,
-          rate: 1,
-          _id: 1,
-        }
-      )
-      .lean();
+          $project: {
+            name: 1,
+            phone: 1,
+            gender: 1,
+            city: 1,
+            country: 1,
+            ImgUrl: 1,
+            specialization: 1,
+            rate: 1,
+            Url: {
+              $concat: [
+                "http://localhost:5173/doctor/profile?name=",
+                {
+                  $replaceAll: {
+                    input: "$name",
+                    find: " ",
+                    replacement: "-",
+                  },
+                },
+              ],
+            },
+          },
+        },
+      ])
+      .skip(skip)
+      .limit(limit);
+    const totalDoctors = await userModel.countDocuments({ role: "Doctor" });
+
+    const totalPages = Math.ceil(totalDoctors / limit);
     if (doctorNames.length === 0) {
-      return next(errorHandler(404, "There are no doctors "));
+      return next(errorHandler(404, "There are no doctors"));
     }
+
     return res.status(200).json({
-      message: "Doctors' names are retrived sucessfully",
+      message: "Doctors' names are retrieved successfully",
       success: true,
       data: doctorNames,
+      totalDoctors: totalDoctors,
+      totalPages: totalPages,
+      currentPage: page,
+      limit: limit,
     });
   } catch (error) {
     return next(
       errorHandler(
         500,
-        "An error occurred while updating the Disease. Please try again later." +
+        "An error occurred while retrieving the doctors. Please try again later. " +
           error
       )
     );
+  }
+};
+
+export const HospitalNames = async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = 10;
+    const skip = (page - 1) * limit;
+
+    const hospitalNames = await userModel
+      .aggregate([
+        { $match: { role: "Hospital" } },
+        {
+          $project: {
+            name: 1,
+            phone: 1,
+            city: 1,
+            country: 1,
+            ImgUrl: 1,
+            rate: 1,
+            dateOfBirth: 1,
+            Url: {
+              $concat: [
+                "http://localhost:5173/hospital/profile?name=",
+                {
+                  $replaceAll: {
+                    input: "$name",
+                    find: " ",
+                    replacement: "-",
+                  },
+                },
+              ],
+            },
+          },
+        },
+      ])
+      .skip(skip)
+      .limit(limit);
+
+    const totalHospitals = await userModel.countDocuments({ role: "Hospital" });
+    const totalPages = Math.ceil(totalHospitals / limit);
+
+    if (hospitalNames.length === 0) {
+      return next(errorHandler(404, "There are no Hospitals"));
+    }
+
+    // Format hospital date fields
+    const formattedHospitals = hospitalNames.map((hospital) => {
+      const establishedDate = hospital.dateOfBirth
+        ? format(new Date(hospital.dateOfBirth), "dd-MM-yyyy")
+        : null;
+
+      return {
+        name: hospital.name,
+        phone: hospital.phone,
+        city: hospital.city,
+        country: hospital.country,
+        ImgUrl: hospital.ImgUrl,
+        rate: hospital.rate,
+        Url: hospital.Url,
+        Established: establishedDate,
+      };
+    });
+
+    return res.status(200).json({
+      message: "Hospital names are retrieved successfully",
+      success: true,
+      data: formattedHospitals,
+      totalHospitals: totalHospitals,
+      totalPages: totalPages,
+      currentPage: page,
+      limit: limit,
+    });
+  } catch (error) {
+    return next(
+      errorHandler(
+        500,
+        "An error occurred while retrieving the Hospitals. Please try again later. " +
+          error
+      )
+    );
+  }
+};
+
+export const showHospital = async (req, res, next) => {
+  try {
+    if (!req.query.name) {
+      return res.redirect("/api/users/hospitals");
+    }
+
+    const HospitalName = req.query.name.replace(/-/g, " ");
+    const hospital = await userModel
+      .findOne(
+        {
+          role: "Hospital",
+          name: HospitalName,
+        },
+        {
+          name: 1,
+          email: 1,
+          phone: 1,
+          city: 1,
+          country: 1,
+          rate: 1,
+          ImgUrl: 1,
+          dateOfBirth: 1, // or 'establishedDate' if applicable
+        }
+      )
+      .lean();
+
+    if (!hospital) {
+      return next(errorHandler(404, "Hospital not found"));
+    }
+
+    const Established = hospital.dateOfBirth
+      ? format(new Date(hospital.dateOfBirth), "dd-MM-yyyy")
+      : "N/A";
+
+    const formatted = {
+      name: hospital.name,
+      email: hospital.email,
+      phone: hospital.phone,
+      city: hospital.city,
+      country: hospital.country,
+      EstablishedDate: Established,
+      rate: hospital.rate,
+      ImgUrl: hospital.ImgUrl,
+    };
+
+    return res.status(200).json({
+      success: true,
+      message: "Hospital profile fetched",
+      hospital: formatted,
+    });
+  } catch (error) {
+    return next(errorHandler(500, error.message));
   }
 };
 

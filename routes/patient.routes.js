@@ -8,12 +8,13 @@ import {
 	registerPatient,
 	updatePatient,
 } from "../controllers/patient.controller.js";
+import cache from "../middlewares/cache.js";
 
 const router = express.Router();
 
-router.get("/one/:id", isAuth, fetchPatient);
+router.get("/one/:id", isAuth, cache(600), fetchPatient);
 
-router.get("/all", isAuth, fetchAllPatients);
+router.get("/all", isAuth, cache(600), fetchAllPatients);
 
 router.post("/", registerPatient);
 
