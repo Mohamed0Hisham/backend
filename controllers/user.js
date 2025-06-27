@@ -12,7 +12,6 @@ import {
   generateRefreshToken,
   verifyRefreshToken,
 } from "../controllers/token.js";
-import { format } from "date-fns";
 
 dotenv.config();
 
@@ -112,13 +111,13 @@ export const login = async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       maxAge: 60 * 60 * 1000,
-      sameSite: "None"
+      sameSite: "none"
     });
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       maxAge: 30 * 24 * 60 * 60 * 1000,
-      sameSite: "None"
+      sameSite: "none"
     });
 
     res.header("accessToken", accessToken);
@@ -207,25 +206,15 @@ export const index = async (req, res, next) => {
     }
 
     const totalUsers = await userModel.countDocuments();
-    const totalAdmin = await userModel.countDocuments({ role: "Admin" });
-    const totalDoctors = await userModel.countDocuments({ role: "Doctor" });
-    const totalPatients = await userModel.countDocuments({ role: "Patient" });
-    const totalHospitals = await userModel.countDocuments({ role: "Hospital" });
-    const totalNurses = await userModel.countDocuments({ role: "Nurse" });
 
     const totalPages = Math.ceil(totalUsers / limit);
 
     // Return the response including pagination info
     return res.status(200).json({
-      success: true,
-      msg: "There are some users",
-      totalUsers: totalUsers,
-      totalAdmin: totalAdmin,
-      totalDoctors: totalDoctors,
-      totalPatients: totalPatients,
-      totalHospitals: totalHospitals,
-      totalNurses: totalNurses,
       data: users,
+      msg: "There are some users",
+      success: true,
+      totalUsers: totalUsers,
       totalPages: totalPages,
       currentPage: page,
     });
@@ -307,199 +296,37 @@ export const update = async (req, res, next) => {
 
 export const DoctorNames = async (req, res, next) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = 10;
-    const skip = (page - 1) * limit;
     const doctorNames = await userModel
-      .aggregate([
-        { $match: { role: "Doctor" } },
-        {
-          $project: {
-            name: 1,
-            phone: 1,
-            gender: 1,
-            city: 1,
-            country: 1,
-            ImgUrl: 1,
-            specialization: 1,
-            rate: 1,
-            Url: {
-              $concat: [
-                "http://localhost:5173/doctor/profile?name=",
-                {
-                  $replaceAll: {
-                    input: "$name",
-                    find: " ",
-                    replacement: "-",
-                  },
-                },
-              ],
-            },
-          },
-        },
-      ])
-      .skip(skip)
-      .limit(limit);
-    const totalDoctors = await userModel.countDocuments({ role: "Doctor" });
-
-    const totalPages = Math.ceil(totalDoctors / limit);
-    if (doctorNames.length === 0) {
-      return next(errorHandler(404, "There are no doctors"));
-    }
-
-    return res.status(200).json({
-      message: "Doctors' names are retrieved successfully",
-      success: true,
-      data: doctorNames,
-      totalDoctors: totalDoctors,
-      totalPages: totalPages,
-      currentPage: page,
-      limit: limit,
-    });
-  } catch (error) {
-    return next(
-      errorHandler(
-        500,
-        "An error occurred while retrieving the doctors. Please try again later. " +
-          error
-      )
-    );
-  }
-};
-
-export const HospitalNames = async (req, res, next) => {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = 10;
-    const skip = (page - 1) * limit;
-
-    const hospitalNames = await userModel
-      .aggregate([
-        { $match: { role: "Hospital" } },
-        {
-          $project: {
-            name: 1,
-            phone: 1,
-            city: 1,
-            country: 1,
-            ImgUrl: 1,
-            rate: 1,
-            dateOfBirth: 1,
-            Url: {
-              $concat: [
-                "http://localhost:5173/hospital/profile?name=",
-                {
-                  $replaceAll: {
-                    input: "$name",
-                    find: " ",
-                    replacement: "-",
-                  },
-                },
-              ],
-            },
-          },
-        },
-      ])
-      .skip(skip)
-      .limit(limit);
-
-    const totalHospitals = await userModel.countDocuments({ role: "Hospital" });
-    const totalPages = Math.ceil(totalHospitals / limit);
-
-    if (hospitalNames.length === 0) {
-      return next(errorHandler(404, "There are no Hospitals"));
-    }
-
-    // Format hospital date fields
-    const formattedHospitals = hospitalNames.map((hospital) => {
-      const establishedDate = hospital.dateOfBirth
-        ? format(new Date(hospital.dateOfBirth), "dd-MM-yyyy")
-        : null;
-
-      return {
-        name: hospital.name,
-        phone: hospital.phone,
-        city: hospital.city,
-        country: hospital.country,
-        ImgUrl: hospital.ImgUrl,
-        rate: hospital.rate,
-        Url: hospital.Url,
-        Established: establishedDate,
-      };
-    });
-
-    return res.status(200).json({
-      message: "Hospital names are retrieved successfully",
-      success: true,
-      data: formattedHospitals,
-      totalHospitals: totalHospitals,
-      totalPages: totalPages,
-      currentPage: page,
-      limit: limit,
-    });
-  } catch (error) {
-    return next(
-      errorHandler(
-        500,
-        "An error occurred while retrieving the Hospitals. Please try again later. " +
-          error
-      )
-    );
-  }
-};
-
-export const showHospital = async (req, res, next) => {
-  try {
-    if (!req.query.name) {
-      return res.redirect("/api/users/hospitals");
-    }
-
-    const HospitalName = req.query.name.replace(/-/g, " ");
-    const hospital = await userModel
-      .findOne(
-        {
-          role: "Hospital",
-          name: HospitalName,
-        },
+      .find(
+        { role: "Doctor" },
         {
           name: 1,
-          email: 1,
           phone: 1,
           city: 1,
           country: 1,
-          rate: 1,
           ImgUrl: 1,
-          dateOfBirth: 1, // or 'establishedDate' if applicable
+          specialization: 1,
+          rate: 1,
+          _id: 1,
         }
       )
       .lean();
-
-    if (!hospital) {
-      return next(errorHandler(404, "Hospital not found"));
+    if (doctorNames.length === 0) {
+      return next(errorHandler(404, "There are no doctors "));
     }
-
-    const Established = hospital.dateOfBirth
-      ? format(new Date(hospital.dateOfBirth), "dd-MM-yyyy")
-      : "N/A";
-
-    const formatted = {
-      name: hospital.name,
-      email: hospital.email,
-      phone: hospital.phone,
-      city: hospital.city,
-      country: hospital.country,
-      EstablishedDate: Established,
-      rate: hospital.rate,
-      ImgUrl: hospital.ImgUrl,
-    };
-
     return res.status(200).json({
+      message: "Doctors' names are retrived sucessfully",
       success: true,
-      message: "Hospital profile fetched",
-      hospital: formatted,
+      data: doctorNames,
     });
   } catch (error) {
-    return next(errorHandler(500, error.message));
+    return next(
+      errorHandler(
+        500,
+        "An error occurred while updating the Disease. Please try again later." +
+          error
+      )
+    );
   }
 };
 
