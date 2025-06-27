@@ -64,7 +64,7 @@ export const store = async (req, res) => {
 			);
 			await session.commitTransaction();
 
-			await invalidateCache([`/api/appointments`]);
+			await invalidateCache([`/api/appointments`, "/api/doctor"]);
 
 			res.status(200).json({
 				message: "Appointment booked successfully",

@@ -38,11 +38,12 @@ export const show = async (req, res, next) => {
 			specialization: doctor.specialization,
 		};
 
+		console.log(doctor.appointments);
 		return res.status(200).json({
 			success: true,
 			message: "doctor profile fetched",
 			doctor: formatted,
-			appointments: user.appointments,
+			appointments: doctor.appointments || [],
 		});
 	} catch (error) {
 		return next(errorHandler(500, error.message));
