@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const userSchema = mongoose.Schema(
+
   {
     name: {
       type: String,
@@ -74,10 +75,19 @@ const userSchema = mongoose.Schema(
       ],
       maxLength: [40, "Specialization MUST NOT exceed 40 characters"],
     },
-    Appointment: {
-      type: [mongoose.Schema.Types.ObjectId],
-      ref: "Appointment",
-    },
+	availability:{
+		days:[{
+			day:{
+				type:String,
+				enum:["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+			},
+			slots:[{
+				startTime:{type:String},
+				endTime:{type:String}
+			}]
+		}]
+	},
+	Appointment: [],
     otp: { type: String },
     otpExpiry: { type: Date },
     isVerified: { type: Boolean, default: false },
@@ -135,6 +145,7 @@ const userSchema = mongoose.Schema(
   {
     timestamps: true,
   }
+
 );
 userSchema.methods.comparePassword = async function (password) {
   return bcrypt.compare(password, this.password);
