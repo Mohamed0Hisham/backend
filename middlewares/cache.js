@@ -10,7 +10,7 @@ const cache = (ttlsec = 300) => {
 			const cached = await redisClient.get(key);
 
 			if (cached) {
-				// console.log(`[Redis] Cache hit for ${req.originalUrl}`);
+				console.log(`[Redis] Cache hit for ${req.originalUrl}`);
 				return res.status(200).json(JSON.parse(cached));
 			}
 

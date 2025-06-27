@@ -35,33 +35,27 @@ export const show = async (req, res, next) => {
     )
       // What if These doctor don't have any Appointments yet
 
-      //   .populate(
-      //     "Appointment",
-      //     "patientName nurseId priority appointmentDate status"
-      //   )
-      .lean();
-    const DoctorDate = format(new Date(doctor.dateOfBirth), "dd-MM-yyyy");
-    const formatted = {
-      name: doctor.name,
-      email: doctor.email,
-      gender: doctor.gender,
-      phone: doctor.phone,
-      city: doctor.city,
-      country: doctor.country,
-      date_Of_Birth: DoctorDate,
-      specialization: doctor.specialization,
-      rate: doctor.rate,
-      ImgUrl: doctor.ImgUrl,
-    };
-    return res.status(200).json({
-      success: true,
-      message: "doctor profile fetched",
-      doctor: formatted,
-      //   appointments: user.Appointment,
-    });
-  } catch (error) {
-    return next(errorHandler(500, error.message));
-  }
+		const formatted = {
+			name: doctor.name,
+			email: doctor.email,
+			age: doctor.age,
+			gender: doctor.gender,
+			phone: doctor.phone,
+			city: doctor.city,
+			country: doctor.country,
+			specialization: doctor.specialization,
+		};
+
+		console.log(doctor.appointments);
+		return res.status(200).json({
+			success: true,
+			message: "doctor profile fetched",
+			doctor: formatted,
+			appointments: doctor.appointments || [],
+		});
+	} catch (error) {
+		return next(errorHandler(500, error.message));
+	}
 };
 
 export const update = async (req, res, next) => {
