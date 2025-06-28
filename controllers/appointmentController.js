@@ -32,6 +32,20 @@ export const store = async (req, res) => {
 			});
 		}
 		if (role !== "Admin" && role !== "Hospital") {
+
+			const appointment = await Appointment.findOne({
+				patientId: patientId,
+				doctorId: doctorId,
+				appointmentDate: appointmentDate
+			}); 
+			if(appointment){
+				await session.abortTransaction();
+				return res
+					.status(404)
+					.json({ success: false, message: "can`t book two appointment in the same day" });
+		
+			}
+
 			const appoint = new Appointment({
 				patientId,
 				nurseId,
@@ -48,23 +62,23 @@ export const store = async (req, res) => {
 				console.error(`doctor not found with id ${doctorId}`);
 				return res
 					.status(404)
-					.json({ success: false, message: "Tour not found" });
+					.json({ success: false, message: "doctor not found" });
 			}
 			await doctor.updateOne(
 				{
-					$push: { appointments: savedAppointment },
+					$push: { Appointment: savedAppointment },
 					//$push: { appointments: savedAppointment._id },
 				},
 				{ session }
 			);
 			await user.findByIdAndUpdate(
 				{ _id: userId },
-				{ $push: { appointments: savedAppointment } },
+				{ $push: { Appointment: savedAppointment } },
 				{ session }
 			);
 			await session.commitTransaction();
 
-			await invalidateCache([`/api/appointments`]);
+			await invalidateCache([`/api/appointments`, "/api/doctor"]);
 
 			res.status(200).json({
 				message: "Appointment booked successfully",
@@ -106,12 +120,12 @@ export const deleteAppointUser = async (req, res) => {
 			await Appointment.findByIdAndDelete(appointmentId).session(session);
 			await user.findByIdAndUpdate(
 				{ _id: userId },
-				{ $pull: { appointments: appointment } },
+				{ $pull: { Appointment: appointment } },
 				{ new: true, session }
 			);
 			await user.findByIdAndUpdate(
 				{ _id: appointment.doctorId },
-				{ $pull: { appointments: appointment } },
+				{ $pull: { Appointment: appointment } },
 				{ new: true, session }
 			);
 			await session.commitTransaction();
@@ -167,19 +181,19 @@ export const deleteAppointDoctor = async (req, res) => {
 			// Remove the appointment from the doctor's record
 			await user.findByIdAndUpdate(
 				doctorId,
-				{ $pull: { appointments: appointment } },
+				{ $pull: { Appointment: appointment } },
 				{ new: true, session }
 			);
 			await user.findByIdAndUpdate(
 				appointment.patientId,
-				{ $pull: { appointments: appointment } },
+				{ $pull: { Appointment: appointment } },
 				{ session }
 			);
 			await user.findByIdAndUpdate(
 				appointment.patientId,
 				{
 					$push: {
-						appointments: {
+						Appointment: {
 							appointmentId: appointment._id,
 							status: "deleted",
 						},
@@ -261,14 +275,14 @@ export const update = async (req, res) => {
 			// Remove old appointment from patient
 			await user.findByIdAndUpdate(
 				userId,
-				{ $pull: { appointments: oldAppoint } },
+				{ $pull: { Appointment: oldAppoint } },
 				{ session }
 			);
 
 			// Add updated appointment to patient
 			await user.findByIdAndUpdate(
 				userId,
-				{ $push: { appointments: newAppointment } },
+				{ $push: { Appointment: newAppointment } },
 				{ session }
 			);
 
@@ -276,14 +290,14 @@ export const update = async (req, res) => {
 			if (doctorId) {
 				await user.findByIdAndUpdate(
 					doctorId,
-					{ $pull: { appointments: oldAppoint } },
+					{ $pull: { Appointment: oldAppoint } },
 					{ session }
 				);
 
 				// Add updated appointment to doctor
 				await user.findByIdAndUpdate(
 					doctorId,
-					{ $push: { appointments: newAppointment } },
+					{ $push: { Appointment: newAppointment } },
 					{ session }
 				);
 			}
@@ -337,7 +351,7 @@ export const index = async (req, res, next) => {
 			);
 		}
 	}
-	if (role === "Nurse" || role === "Doctor") {
+	if (role === "Nurse" || role === "Doctor"|| role === "Patient") {
 		try {
 			// Filter based on user role
 			let filter = {};
@@ -345,6 +359,8 @@ export const index = async (req, res, next) => {
 				filter = { doctorId: userId };
 			} else if (role === "Nurse") {
 				filter = { nurseId: userId };
+			}else if (role === "Patient") {
+				filter = { patientId: userId };
 			}
 
 			// Pagination setup
@@ -386,8 +402,23 @@ export const index = async (req, res, next) => {
 
 export const show = async (req, res, next) => {
 	const id = req.params.id;
+	const patientId = req.user._id
+	const booking = await Appointment.findById(id);
 	try {
-		const booking = await Appointment.findById(id);
+		if(!patientId){
+			session.abortTransaction()
+			return res
+					.status(404)
+					.json({ success: false, message: "patientId is required" });
+		
+		}
+		if(booking.patientId.toString()!== patientId){
+			return res.status(403).json({
+                success: false,
+                message: "It's not your appointment."
+            });
+		}
+		
 		res.status(200).json({
 			message: "Appointment data has been retirved successfully",
 			success: true,
