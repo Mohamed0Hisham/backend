@@ -129,23 +129,14 @@ export const login = async (req, res) => {
 
 		res.cookie("refreshToken", refreshToken, {
 			httpOnly: true,
-			secure: false,
+			secure: true,
 			maxAge: 60 * 60 * 1000,
-			sameSite: "Lax",
-		});
-		res.cookie("accessToken", accessToken, {
-			httpOnly: true,
-			secure: false,
-			sameSite: "Lax",
-			maxAge: 30 * 24 * 60 * 60 * 1000,
+			sameSite: "None",
 		});
 
-		res.header("accessToken", accessToken);
 		return res.status(200).json({
 			Role: user.role,
 			accessToken,
-			refreshToken,
-			//user: { id: user._id, name: user.name, email: user.email, role: user.role }
 		});
 	} catch (error) {
 		console.error(error);
@@ -172,8 +163,11 @@ export const logout = async (req, res) => {
 			await user.save();
 		}
 		// Clear cookies
-		res.clearCookie("accessToken");
-		res.clearCookie("refreshToken");
+		res.clearCookie("refreshToken", {
+			httpOnly: true,
+			secure: true,
+			sameSite: "None",
+		});
 		return res.status(200).json({ message: "Logged out successfully" });
 	} catch (error) {
 		console.error(error);
@@ -196,15 +190,9 @@ export const refresh = async (req, res) => {
 		if (!user || !user.refreshTokens.includes(refreshToken)) {
 			return res.status(403).json({ message: "Invalid refresh token" });
 		}
-		const newAccessToken = generateAccessToken(user);
-		res.cookie("newAccessToken", newAccessToken, {
-			httpOnly: true,
-			secure: process.env.NODE_ENV === "production",
-			maxAge: 60 * 60 * 1000,
-		});
-		return res
-			.status(200)
-			.json({ newAccessToken, message: " successfully" });
+		const accessToken = generateAccessToken(user);
+
+		return res.status(201).json({ accessToken });
 	} catch (error) {
 		console.error(error);
 		return res
