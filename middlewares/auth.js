@@ -1,5 +1,4 @@
 import jwt from "jsonwebtoken";
-//import { isTokenInBlacklist } from "../controllers/blacklist.js";
 
 const authenticateJWT = (req, res, next) => {
 	try {
