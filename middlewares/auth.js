@@ -1,30 +1,40 @@
 import jwt from "jsonwebtoken";
 
 const authenticateJWT = (req, res, next) => {
-	const fullToken = req.headers.authorization;
-	if (!fullToken) {
-		return res.status(401).json({ message: "Access denied" });
-	}
-
-	const accessToken = fullToken.split(" ")[1];
-	if (!accessToken) {
-		return res.status(401).json({ message: "Access denied" });
-	}
-
 	try {
-		const decoded = jwt.verify(
-			accessToken,
-			process.env.ACCESS_TOKEN_SECRET
+		const fullToken = req.cookies.accessToken;
+		// const fullToken = req.headers.authorization;
+		if (!fullToken) {
+			return res.status(401).json({ message: "Access denied" });
+		}
+
+		/**const accessToken = fullToken.split(" ")[1];
+		if (!accessToken) {
+			return res.status(403).json({ message: "Access denied" });
+		}
+	
+		/**if (isTokenInBlacklist(token)) {
+			return res
+				.status(401)
+				.json({ message: "Token is invalid, please log in again" });
+		}*/
+
+		jwt.verify(
+			fullToken,
+			process.env.ACCESS_TOKEN_SECRET,
+			(err, decodedToken) => {
+				if (err) {
+					return res.status(401).json({ message: "Invalid token" });
+				}
+				req.user = decodedToken;
+				next();
+			}
 		);
-		req.user = decoded;
-		next();
 	} catch (error) {
-		return res.status(401).json({
-			success: false,
-			message:
-				error.name === "TokenExpiredError"
-					? "Token expired"
-					: "Invalid token",
+		return res.status(500).json({
+			message: "An error occurred while logging in",
+			errorStack: error.stack,
+			errorMessage: error.message,
 		});
 	}
 };
