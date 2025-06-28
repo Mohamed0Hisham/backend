@@ -32,30 +32,33 @@ export const show = async (req, res, next) => {
         dateOfBirth: 1,
         // Appointment: 1,
       }
-    )
-      // What if These doctor don't have any Appointments yet
+    );
+    // What if These doctor don't have any Appointments yet
+    const DoctorDate = format(new Date(doctor.dateOfBirth), "dd-MM-yyyy");
+    const formatted = {
+      name: doctor.name,
+      email: doctor.email,
+      age: doctor.age,
+      gender: doctor.gender,
+      phone: doctor.phone,
+      city: doctor.city,
+      country: doctor.country,
+      dateDate: DoctorDate,
+      specialization: doctor.specialization,
+      rate: doctor.rate,
+      ImgUrl: doctor.ImgUrl,
+    };
 
-		const formatted = {
-			name: doctor.name,
-			email: doctor.email,
-			age: doctor.age,
-			gender: doctor.gender,
-			phone: doctor.phone,
-			city: doctor.city,
-			country: doctor.country,
-			specialization: doctor.specialization,
-		};
-
-		console.log(doctor.appointments);
-		return res.status(200).json({
-			success: true,
-			message: "doctor profile fetched",
-			doctor: formatted,
-			appointments: doctor.appointments || [],
-		});
-	} catch (error) {
-		return next(errorHandler(500, error.message));
-	}
+    console.log(doctor.appointments);
+    return res.status(200).json({
+      success: true,
+      message: "doctor profile fetched",
+      doctor: formatted,
+      appointments: doctor.appointments || [],
+    });
+  } catch (error) {
+    return next(errorHandler(500, error.message));
+  }
 };
 
 export const update = async (req, res, next) => {
