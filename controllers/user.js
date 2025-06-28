@@ -131,13 +131,13 @@ export const login = async (req, res) => {
 			httpOnly: true,
 			secure: false,
 			maxAge: 60 * 60 * 1000,
-			sameSite: "None",
+			sameSite: "Lax",
 		});
 		res.cookie("accessToken", accessToken, {
 			httpOnly: true,
 			secure: false,
+			sameSite: "Lax",
 			maxAge: 30 * 24 * 60 * 60 * 1000,
-			sameSite: "None",
 		});
 
 		res.header("accessToken", accessToken);
