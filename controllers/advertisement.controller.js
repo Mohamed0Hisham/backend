@@ -9,27 +9,40 @@ export const index = async (req, res, next) => {
     const page = parseInt(req.query.page) || 1;
     const limit = 10;
     const skip = (page - 1) * limit;
-    const advertisement = await ADVERTISEMENT.find() //.sort({ : 1 })
+
+    // Fetch advertisements with creatorId populated (only name)
+    const advertisements = await ADVERTISEMENT.find()
       .skip(skip)
       .limit(limit)
-      .lean();
+      .populate("creatorId", "name") // populate creator's name
+      .sort({ createdAt: -1 }); // optional sorting by creation date descending
 
-    if (advertisement.length == 0) {
-      return next(errorHandler(204, "There are no Advertisments"));
+    if (advertisements.length === 0) {
+      return next(errorHandler(204, "There are no Advertisements"));
     }
+
     const totalAdvertisements = await ADVERTISEMENT.countDocuments();
     const totalPages = Math.ceil(totalAdvertisements / limit);
+
+    // Replace creatorId with creatorName in each advertisement
+    const adsWithCreatorName = advertisements.map((ad) => {
+      const adObj = ad.toObject(); // convert Mongoose doc to plain object
+      adObj.creatorName = adObj.creatorId?.name || "Unknown";
+      delete adObj.creatorId;
+      return adObj;
+    });
+
     return res.status(200).json({
-      data: advertisement,
-      message: "advertisements fetched successfully",
+      data: adsWithCreatorName,
+      message: "Advertisements fetched successfully",
       success: true,
-      totalAdvertisements: totalAdvertisements,
-      totalPages: totalPages,
+      totalAdvertisements,
+      totalPages,
       currentPage: page,
     });
   } catch (error) {
     return next(
-      errorHandler(500, "Error while fetching advertisements: " + error)
+      errorHandler(500, "Error while fetching advertisements: " + error.message)
     );
   }
 };
@@ -38,23 +51,37 @@ export const show = async (req, res, next) => {
   try {
     const id = req.params.id;
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return next(errorHandler(400, "Invalid Advertisment ID"));
+      return next(errorHandler(400, "Invalid Advertisement ID"));
     }
-    const advertisement = await ADVERTISEMENT.findById(id);
+
+    // Populate creatorId to get the user's name
+    const advertisement = await ADVERTISEMENT.findById(id).populate(
+      "creatorId",
+      "name"
+    );
+
     if (!advertisement) {
-      return next(errorHandler(404, "Can't found this Advertisment"));
+      return next(errorHandler(404, "Can't find this Advertisement"));
     }
+
+    // Convert to plain JS object to modify before sending
+    const adObject = advertisement.toObject();
+
+    // Replace creatorId with creator's name
+    adObject.creatorName = adObject.creatorId?.name || "Unknown";
+    delete adObject.creatorId;
+
     res.status(200).json({
-      data: advertisement,
-      msg: "This Advertisment has been found",
+      data: adObject,
+      msg: "This Advertisement has been found",
       success: true,
     });
   } catch (error) {
     return next(
       errorHandler(
         500,
-        "An error occurred while retrieving the Advertisment. Please try again later." +
-          error
+        "An error occurred while retrieving the Advertisement. Please try again later. " +
+          error.message
       )
     );
   }
@@ -64,11 +91,8 @@ export const store = async (req, res, next) => {
   const result = { ...req.body };
   result.creatorId = req.user._id;
   result.creatorRole = req.user.role;
-  if (
-    resultresult.creatorRole !== "Admin" ||
-    result.creatorRole !== "Doctor" ||
-    result.creatorRole !== "Hospital"
-  ) {
+  if (result.creatorRole === "Patient" || result.creatorRole === "Nurse") {
+    console.log(result.creatorRole);
     return next(errorHandler(401, "you are not authorized to do this"));
   }
   if (!result.description || !result.title || !req.file) {
