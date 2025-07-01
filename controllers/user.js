@@ -245,8 +245,9 @@ export const index = async (req, res, next) => {
 export const show = async (req, res, next) => {
   try {
     const id = req.user._id;
+    const role = req.user.role;
     const user = await userModel.findById(id);
-    if (!user) {
+    if (!user || role !== "Admin") {
       return next(errorHandler(404, "Cannot find this user  "));
     }
     return res.status(200).json({
