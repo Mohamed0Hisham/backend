@@ -199,7 +199,7 @@ export const index = async (req, res, next) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const users = await userModel.find().skip(skip).limit(limit).lean();
+    const users = await userModel.find().lean();
 
     if (users.length === 0) {
       return next(errorHandler(404, "There are no users")); // 404 Not Found for empty result
@@ -245,8 +245,9 @@ export const index = async (req, res, next) => {
 export const show = async (req, res, next) => {
   try {
     const id = req.user._id;
+    const role = req.user.role;
     const user = await userModel.findById(id);
-    if (!user) {
+    if (!user || role !== "Admin") {
       return next(errorHandler(404, "Cannot find this user  "));
     }
     return res.status(200).json({
