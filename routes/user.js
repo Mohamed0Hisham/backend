@@ -10,7 +10,7 @@ const router = express.Router();
 // Define your route
 router.post("/register", userController.register);
 router.post("/login", userController.login);
-router.post("/logout", userController.logout);
+router.post("/logout", authenticateJWT,userController.logout);
 router.get("/", authenticateJWT, cache(600), userController.index);
 router.get("/one", authenticateJWT, cache(600), userController.show);
 router.post("/refresh", userController.refresh);

@@ -155,25 +155,29 @@ export const login = async (req, res) => {
 };
 export const logout = async (req, res) => {
 	try {
-		const refreshToken = req.cookies.refreshToken; // Access the refresh token correctly
-		if (!refreshToken) {
-			return res
-				.status(404)
-				.json({ message: "No refresh token found, logout denied" });
-		}
-		const user = await userModel.findOne({ refreshTokens: refreshToken });
-		if (user) {
-			user.refreshTokens = user.refreshTokens.filter(
-				(token) => token !== refreshToken
-			);
-			await user.save();
-		}
+		const userId = req.user._id;
+		const refreshToken = req?.cookies?.refreshToken;
+		const accessToken = req?.cookies?.accessToken;
+
+		const user = await userModel.findOne({ _id: userId });
+		if (!user) return errorHandler(404, "user doesn't exist in database");
+
+		user.refreshTokens = [];
+		await user.save();
+
 		// Clear cookies
-		res.clearCookie("refreshToken", {
-			httpOnly: true,
-			secure: true,
-			sameSite: "None",
-		});
+		if (refreshToken)
+			res.clearCookie("refreshToken", {
+				httpOnly: true,
+				secure: true,
+				sameSite: "None",
+			});
+		if (accessToken)
+			res.clearCookie("accessToken", {
+				httpOnly: true,
+				secure: true,
+				sameSite: "None",
+			});
 		return res.status(200).json({ message: "Logged out successfully" });
 	} catch (error) {
 		console.error(error);
@@ -566,11 +570,13 @@ export const showHospital = async (req, res, next) => {
 // 	}
 // };
 export const deleteAccount = async (req, res, next) => {
-	const userId = req.user._id;
-
 	try {
+		const userId = req.user._id;
+		const refreshToken = req?.cookies?.refreshToken;
+		const accessToken = req?.cookies?.accessToken;
+
 		if (!userId) {
-			return next(errorHandler(401, "Unauthorized: User ID not found"));
+			return next(errorHandler(401, "Unauthenticated: please, login"));
 		}
 
 		if (!mongoose.Types.ObjectId.isValid(userId)) {
@@ -591,6 +597,21 @@ export const deleteAccount = async (req, res, next) => {
 		}
 
 		await userModel.deleteOne({ _id: userId });
+
+		// Clear cookies
+		if (refreshToken)
+			res.clearCookie("refreshToken", {
+				httpOnly: true,
+				secure: true,
+				sameSite: "None",
+			});
+		if (accessToken)
+			res.clearCookie("accessToken", {
+				httpOnly: true,
+				secure: true,
+				sameSite: "None",
+			});
+
 		return res.status(200).json({
 			success: true,
 			message: "Account deleted successfully",
