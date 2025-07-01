@@ -119,6 +119,10 @@ export const login = async (req, res) => {
 		const accessToken = generateAccessToken(user);
 		const refreshToken = generateRefreshToken(user);
 
+    if (user.refreshTokens.length >= 2) {
+      user.refreshTokens.shift(); 
+    }
+
 		user.refreshTokens.push(refreshToken);
 		await user.save();
 
