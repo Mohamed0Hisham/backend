@@ -195,9 +195,9 @@ export const index = async (req, res, next) => {
       });
     }
 
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
+    // const page = parseInt(req.query.page) || 1;
+    // const limit = parseInt(req.query.limit) || 10;
+    // const skip = (page - 1) * limit;
 
     const users = await userModel.find().lean();
 
@@ -216,7 +216,7 @@ export const index = async (req, res, next) => {
     });
     const totalNurses = await userModel.countDocuments({ role: "Nurse" });
 
-    const totalPages = Math.ceil(totalUsers / limit);
+    // const totalPages = Math.ceil(totalUsers / limit);
 
     // Return the response including pagination info
     return res.status(200).json({
@@ -229,8 +229,8 @@ export const index = async (req, res, next) => {
       totalHospitals: totalHospitals,
       totalNurses: totalNurses,
       data: users,
-      totalPages: totalPages,
-      currentPage: page,
+      // totalPages: totalPages,
+      // currentPage: page,
     });
   } catch (error) {
     return next(
@@ -247,7 +247,31 @@ export const show = async (req, res, next) => {
     const id = req.user._id;
     const role = req.user.role;
     const user = await userModel.findById(id);
-    if (!user || role !== "Admin") {
+    if (!user) {
+      return next(errorHandler(404, "Cannot find this user  "));
+    }
+    return res.status(200).json({
+      data: user,
+      msg: "The user data has been retrived",
+      success: true,
+    });
+  } catch (error) {
+    return next(
+      errorHandler(
+        500,
+        "There is an error occured when retrived this user data,Please try again later " +
+          error
+      )
+    );
+  }
+};
+
+export const showOneUser = async (req, res, next) => {
+  try {
+    const role = req.user.role;
+    const id = req.params.id;
+    const user = await userModel.findById(id);
+    if (role !== "Admin") {
       return next(errorHandler(404, "Cannot find this user  "));
     }
     return res.status(200).json({
