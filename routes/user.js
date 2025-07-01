@@ -13,6 +13,7 @@ router.post("/login", userController.login);
 router.post("/logout", userController.logout);
 router.get("/", authenticateJWT, cache(600), userController.index);
 router.get("/one", authenticateJWT, cache(600), userController.show);
+router.get("/one/:id", authenticateJWT, cache(600), userController.showOneUser);
 router.post("/refresh", userController.refresh);
 router.get("/doctors", userController.DoctorNames);
 router.get("/hospitals", userController.HospitalNames);
