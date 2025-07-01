@@ -1,10 +1,10 @@
 import express from "express";
 import {
-	index,
-	show,
-	store,
-	update,
-	destroy,
+  index,
+  show,
+  store,
+  update,
+  destroy,
 } from "../controllers/advertisement.controller.js";
 import authenticateJWT from "../middlewares/auth.js";
 import multer from "multer";

@@ -23,6 +23,14 @@ export const store = async (req, res) => {
 		const currentDate = new Date();
 		currentDate.setHours(0, 0, 0, 0);
 		const appointDate = new Date(appointmentDate);
+		if(patientId == doctorId){
+			await session.abortTransaction();
+
+			return res.status(400).send({
+				success: false,
+				message: "can`t book to your self",
+			});
+		}
 		if (appointDate < currentDate) {
 			await session.abortTransaction();
 
@@ -45,6 +53,7 @@ export const store = async (req, res) => {
 					.json({ success: false, message: "can`t book two appointment in the same day" });
 		
 			}
+			
 
 			const appoint = new Appointment({
 				patientId,
@@ -103,6 +112,7 @@ export const deleteAppointUser = async (req, res) => {
 	const role = req.user.role;
 	const userId = req.user._id;
 	if (role == "Admin" || role == "Patient") {
+		
 		const session = await startSession();
 		try {
 			session.startTransaction();
@@ -115,6 +125,15 @@ export const deleteAppointUser = async (req, res) => {
 				return res
 					.status(404)
 					.json({ message: "Appointment not found" });
+			}
+
+			if(appointment.patientId.toString()!== userId){
+				await session.abortTransaction();
+
+			return res.status(400).send({
+				success: false,
+				message: "it is not yours.",
+			})
 			}
 
 			await Appointment.findByIdAndDelete(appointmentId).session(session);
@@ -431,3 +450,4 @@ export const show = async (req, res, next) => {
 		});
 	}
 };
+
