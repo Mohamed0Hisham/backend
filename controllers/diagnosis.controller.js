@@ -14,7 +14,7 @@ export const fetchAllDiagnoses = async (req, res, next) => {
 			user.role !== "Admin" &&
 			user.role !== "Doctor" &&
 			user.role !== "Hospital" &&
-			Number(patientId) !== Number(user.id)
+			patientId !== user._id
 		)
 			return next(errorHandler(401, "unauthorized operation"));
 
@@ -55,7 +55,7 @@ export const fetchSpecificDiagnosis = async (req, res, next) => {
 			user.role !== "Admin" &&
 			user.role !== "Doctor" &&
 			user.role !== "Hospital" &&
-			Number(patientId) !== Number(user.id)
+			patientId !== user._id
 		)
 			return next(errorHandler(401, "unauthorized operation"));
 
@@ -77,7 +77,7 @@ export const fetchSpecificDiagnosis = async (req, res, next) => {
 
 		return res.status(200).json({
 			success: true,
-			message: "fetched all diagnoses for the patient",
+			message: "fetched diagnosis for the patient",
 			diagnosis,
 		});
 	} catch (error) {
