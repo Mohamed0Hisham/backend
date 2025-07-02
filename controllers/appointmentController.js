@@ -420,10 +420,11 @@ export const index = async (req, res, next) => {
       if (appointments.length === 0) {
         return res.status(404).json({ message: "No appointments found" });
       }
-
+      const totalAppointments = await Appointment.countDocuments();
       res.json({
         message: "Appointments retrieved successfully",
         data: appointments,
+        totalAppointments: totalAppointments,
       });
     } catch (error) {
       console.error("Error fetching appointments:", error);
