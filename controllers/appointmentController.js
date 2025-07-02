@@ -372,6 +372,7 @@ export const index = async (req, res, next) => {
   if (role === "Admin") {
     try {
       const appointments = await Appointment.find();
+      const totalAppointments = await Appointment.countDocuments();
 
       if (appointments.length === 0) {
         return next(errorHandler(404, "There are no appointments"));
@@ -379,6 +380,7 @@ export const index = async (req, res, next) => {
       return res.status(200).json({
         message: "Appointments retrieved successfully",
         data: appointments,
+        totalAppointments: totalAppointments,
       });
     } catch (error) {
       return next(
