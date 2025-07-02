@@ -26,8 +26,9 @@ export const fetchPatient = async (req, res, next) => {
       otpExpiry: 0,
       isVerified: 0,
       refreshToken: 0,
-      role: 0,
+      // role: 0,
     }).lean();
+    console.log(patient);
     if (!patient || patient.role !== "Patient")
       return next(errorHandler(404, "patient doesn't exist at database"));
 
