@@ -640,6 +640,9 @@ export const changeUserRole = async (req, res, next) => {
         return next(errorHandler(400, "Cannot change the last admin's role"));
       }
     }
+    if (user.role === newRole) {
+      return next(errorHandler(400, "Cannot change role to the same role"));
+    }
 
     // Update the user's role
     user.role = newRole;
