@@ -56,6 +56,11 @@ export const register = async (req, res, next) => {
     }
 
     const newUser = new userModel(req.body);
+    if (req.file) {
+      const image = await uploadImg(req.file);
+      newUser.ImgPublicId = image.ImgPublicId;
+      newUser.ImgUrl = image.ImgUrl;
+    }
     const hashedPassword = await bcrypt.hash(req.body.password, 10);
     newUser.password = hashedPassword;
 
@@ -100,14 +105,12 @@ export const login = async (req, res) => {
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 
-
     if (user.refreshTokens.length >= 3) {
-      user.refreshTokens.shift(); 
+      user.refreshTokens.shift();
     }
 
-		user.refreshTokens.push(refreshToken);
-		await user.save();
-
+    user.refreshTokens.push(refreshToken);
+    await user.save();
 
     /**if (!accessToken)
 			return res
@@ -142,37 +145,37 @@ export const login = async (req, res) => {
   }
 };
 export const logout = async (req, res) => {
-	try {
-		const userId = req.user._id;
-		const refreshToken = req?.cookies?.refreshToken;
-		const accessToken = req?.cookies?.accessToken;
+  try {
+    const userId = req.user._id;
+    const refreshToken = req?.cookies?.refreshToken;
+    const accessToken = req?.cookies?.accessToken;
 
-		const user = await userModel.findOne({ _id: userId });
-		if (!user) return errorHandler(404, "user doesn't exist in database");
+    const user = await userModel.findOne({ _id: userId });
+    if (!user) return errorHandler(404, "user doesn't exist in database");
 
-		user.refreshTokens = [];
-		await user.save();
+    user.refreshTokens = [];
+    await user.save();
 
-		// Clear cookies
-		if (refreshToken)
-			res.clearCookie("refreshToken", {
-				httpOnly: true,
-				secure: true,
-				sameSite: "None",
-			});
-		if (accessToken)
-			res.clearCookie("accessToken", {
-				httpOnly: true,
-				secure: true,
-				sameSite: "None",
-			});
-		return res.status(200).json({ message: "Logged out successfully" });
-	} catch (error) {
-		console.error(error);
-		return res
-			.status(500)
-			.json({ message: "Server error during logout", error });
-	}
+    // Clear cookies
+    if (refreshToken)
+      res.clearCookie("refreshToken", {
+        httpOnly: true,
+        secure: true,
+        sameSite: "None",
+      });
+    if (accessToken)
+      res.clearCookie("accessToken", {
+        httpOnly: true,
+        secure: true,
+        sameSite: "None",
+      });
+    return res.status(200).json({ message: "Logged out successfully" });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ message: "Server error during logout", error });
+  }
 };
 export const refresh = async (req, res) => {
   try {
@@ -576,14 +579,14 @@ export const showHospital = async (req, res, next) => {
 // 	}
 // };
 export const deleteAccount = async (req, res, next) => {
-	try {
-		const userId = req.user._id;
-		const refreshToken = req?.cookies?.refreshToken;
-		const accessToken = req?.cookies?.accessToken;
+  try {
+    const userId = req.user._id;
+    const refreshToken = req?.cookies?.refreshToken;
+    const accessToken = req?.cookies?.accessToken;
 
-		if (!userId) {
-			return next(errorHandler(401, "Unauthenticated: please, login"));
-		}
+    if (!userId) {
+      return next(errorHandler(401, "Unauthenticated: please, login"));
+    }
 
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return next(errorHandler(400, "Invalid User ID"));
@@ -602,31 +605,29 @@ export const deleteAccount = async (req, res, next) => {
       await deleteImg(user.ImgPublicId);
     }
 
-		await userModel.deleteOne({ _id: userId });
+    await userModel.deleteOne({ _id: userId });
 
-		// Clear cookies
-		if (refreshToken)
-			res.clearCookie("refreshToken", {
-				httpOnly: true,
-				secure: true,
-				sameSite: "None",
-			});
-		if (accessToken)
-			res.clearCookie("accessToken", {
-				httpOnly: true,
-				secure: true,
-				sameSite: "None",
-			});
+    // Clear cookies
+    if (refreshToken)
+      res.clearCookie("refreshToken", {
+        httpOnly: true,
+        secure: true,
+        sameSite: "None",
+      });
+    if (accessToken)
+      res.clearCookie("accessToken", {
+        httpOnly: true,
+        secure: true,
+        sameSite: "None",
+      });
 
-		return res.status(200).json({
-			success: true,
-			message: "Account deleted successfully",
-		});
-	} catch (error) {
-		return next(
-			errorHandler(500, "Error deleting account: " + error.message)
-		);
-	}
+    return res.status(200).json({
+      success: true,
+      message: "Account deleted successfully",
+    });
+  } catch (error) {
+    return next(errorHandler(500, "Error deleting account: " + error.message));
+  }
 };
 
 export const changeUserRole = async (req, res, next) => {
