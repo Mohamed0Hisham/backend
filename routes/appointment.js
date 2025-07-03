@@ -12,7 +12,7 @@ import cache from "../middlewares/cache.js";
 
 const router = express.Router();
 
-router.get("/", authintication, cache(600), index);
+router.get("/", authintication, index);
 router.get("/:id", authintication, cache(600), show);
 router.post("/doctor/:id", authintication, store);
 router.patch("/:id", authintication, update);
