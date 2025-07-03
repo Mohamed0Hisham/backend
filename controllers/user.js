@@ -31,7 +31,6 @@ export const register = async (req, res, next) => {
     if (!city) missingFields.push("city");
     if (!country) missingFields.push("country");
     if (!dateOfBirth) missingFields.push("dateOfBirth");
-    if (!req.file) missingFields.push("image");
 
     if (missingFields.length > 0) {
       return next(
@@ -55,10 +54,13 @@ export const register = async (req, res, next) => {
         )
       );
     }
-    const image = await uploadImg(req.file);
+
     const newUser = new userModel(req.body);
-    newUser.ImgPublicId = image.ImgPublicId;
-    newUser.ImgUrl = image.ImgUrl;
+    if (req.file) {
+      const image = await uploadImg(req.file);
+      newUser.ImgPublicId = image.ImgPublicId;
+      newUser.ImgUrl = image.ImgUrl;
+    }
     const hashedPassword = await bcrypt.hash(req.body.password, 10);
     newUser.password = hashedPassword;
 
