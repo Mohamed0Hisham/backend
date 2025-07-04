@@ -8,12 +8,12 @@ const cachePDF = (keyGenerator, ttl = 3600) => {
 		try {
 			const key = keyGenerator(req);
 
-			// console.time("redis");
+			console.time("redis");
 			const cachedPDF = await redisClient.get(key);
-			// console.timeEnd("redis");
+			console.timeEnd("redis");
 
 			if (cachedPDF) {
-				// console.log(`[Redis PDF] Cache hit: ${key}`);
+				console.log(`[Redis PDF] Cache hit: ${key}`);
 				const buffer = Buffer.from(cachedPDF, "base64");
 				res.setHeader("Content-Type", "application/pdf");
 				res.setHeader(

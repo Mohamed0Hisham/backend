@@ -8,7 +8,6 @@ import { invalidateCache } from "../helpers/invalidateCache.js";
 
 export const index = async (req, res, next) => {
 	try {
-		// Fetch all advice items
 		const page = parseInt(req.query.page) || 1;
 		const limit = 10;
 		const skip = (page - 1) * limit;
@@ -17,19 +16,16 @@ export const index = async (req, res, next) => {
 			return next(errorHandler(200, "Advice list is empty"));
 		}
 
-		// Step 1: Extract diseasesCategoryIDs and doctorIds
 		const diseasesCategoryIDs = adviceList.map(
 			(item) => item.diseasesCategoryId
 		);
 		const doctorIDs = adviceList.map((item) => item.doctorId);
 
-		// Step 2: Fetch diseases categories and doctors from the database
 		const diseasesCategories = await DiseasesCategory.find({
 			_id: { $in: diseasesCategoryIDs },
 		});
 		const doctors = await USER.find({ _id: { $in: doctorIDs } });
 
-		// Step 3: Create mappings for diseases categories and doctors
 		const diseasesCategoryMap = diseasesCategories.reduce(
 			(acc, category) => {
 				acc[category._id.toString()] = category.name;
@@ -39,23 +35,22 @@ export const index = async (req, res, next) => {
 		);
 
 		const doctorMap = doctors.reduce((acc, doctor) => {
-			acc[doctor._id.toString()] = doctor.name; // Assuming the Doctor model has a 'name' field
+			acc[doctor._id.toString()] = doctor.name;
 			return acc;
 		}, {});
 
-		// Step 4: Map the adviceList to include diseasesCategoryName and doctorName
+
 		const advice = adviceList.map(
 			({ diseasesCategoryId, doctorId, ...item }) => ({
 				diseasesCategoryName:
 					diseasesCategoryMap[diseasesCategoryId?.toString()] ||
 					"unknown",
-				doctorName: doctorMap[doctorId?.toString()] || "unknown", // Add doctorName
+				doctorName: doctorMap[doctorId?.toString()] || "unknown",
 				...item,
 			})
 		);
 		const totalAdvices = await ADVICE.countDocuments();
 		const totalPages = Math.ceil(totalAdvices / limit);
-		// Step 5: Return the response
 		return res.status(200).json({
 			data: advice,
 			message: "Advices fetched successfully",
