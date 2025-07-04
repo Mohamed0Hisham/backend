@@ -64,7 +64,7 @@ export const register = async (req, res, next) => {
     const hashedPassword = await bcrypt.hash(req.body.password, 10);
     newUser.password = hashedPassword;
 
-    const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, {
+    const token = jwt.sign({ email: email }, process.env.JWT_SECRET, {
       expiresIn: "24h",
     });
 

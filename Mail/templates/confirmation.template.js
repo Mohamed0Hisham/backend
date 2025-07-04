@@ -89,9 +89,9 @@ export const confirmationTemplate = (email, magicToken) => `<!DOCTYPE html>
         <div class="content">
             <h2>Confirm Your Sign-Up</h2>
             <p>Thank you for signing up with MedEase. To complete your registration, please click the button below to confirm your email address:</p>
-            <a href="https://medease-server.up.railway.app/auth/email/confirm?email=${email}&token=${magicToken}" class="magic-link-button">Confirm My Email</a>
+            <a href="https://medeasy-backend-cgetg3arfvgfcjcq.westcentralus-01.azurewebsites.net/auth/email/confirm?email=${email}&token=${magicToken}" class="magic-link-button">Confirm My Email</a>
             <p>If the button above doesn't work, you can also copy and paste the following link into your browser:</p>
-            <p><a href="https://medease-server.up.railway.app/auth/email/confirm?email=${email}&token=${magicToken}" style="color: #007bff; word-break: break-all;">https://medease-server.up.railway.app/auth/email/confirm?email=${email}&token=${magicToken}</a></p>
+            <p><a href="https://medeasy-backend-cgetg3arfvgfcjcq.westcentralus-01.azurewebsites.net/auth/email/confirm?email=${email}&token=${magicToken}" style="color: #007bff; word-break: break-all;">https://medease-server.up.railway.app/auth/email/confirm?email=${email}&token=${magicToken}</a></p>
             <p>This link will expire in <strong>24 hours</strong>. If you did not sign up for an account, you can safely ignore this email.</p>
         </div>
         <div class="footer">
