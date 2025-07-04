@@ -27,6 +27,6 @@ class Mailer {
 }
 
 const mailerInstance = new Mailer();
-Object.freeze(mailerInstance); // Prevent modification of the instance
+Object.freeze(mailerInstance);
 
 export default mailerInstance;
