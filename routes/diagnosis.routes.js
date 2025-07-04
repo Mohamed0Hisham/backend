@@ -20,10 +20,10 @@ router.get(
   fetchSpecificDiagnosis
 );
 
+
 router.post("/", isAuth, addDiagnosis);
-
-// router.put("/:patientId/:diagnosisId", isAuth, updateDiagnosis);
 router.patch("/:patientId/:diagnosisId", isAuth, updateDiagnosis);
-
 router.delete("/:patientId/:diagnosisId", isAuth, deleteDiagnosis);
+
 export default router;
+// router.put("/:patientId/:diagnosisId", isAuth, updateDiagnosis);
