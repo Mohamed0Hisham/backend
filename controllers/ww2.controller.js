@@ -30,17 +30,17 @@ export const addWW2Data = async (req, res, next) => {
     // Create new vote with IP and cookie tracking
     const newWW2Data = await ww2.create({
       country,
-      ip,
-      voterCookie: `vote_${Date.now()}`, // Unique cookie value
+      // ip,
+      // voterCookie: `vote_${Date.now()}`, // Unique cookie value
     });
 
     // Set cookie that expires in 30 days
-    res.cookie("ww2Voted", newWW2Data.voterCookie, {
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-      httpOnly: true,
-      sameSite: "strict",
-      secure: process.env.NODE_ENV === "production",
-    });
+    // res.cookie("ww2Voted", newWW2Data.voterCookie, {
+    //   maxAge: 30 * 24 * 60 * 60 * 1000,
+    //   httpOnly: true,
+    //   sameSite: "strict",
+    //   secure: true,
+    // });
 
     return res.status(201).json({
       success: true,
