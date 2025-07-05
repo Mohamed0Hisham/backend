@@ -111,7 +111,7 @@ export const store = async (req, res, next) => {
     const newadvertisement = await new ADVERTISEMENT(result);
     await newadvertisement.save();
 
-    await invalidateCache([`/api/advertisements/`]);
+    await invalidateCache([`/api/advertisements`]);
 
     return res.status(201).json({
       data: newadvertisement,
@@ -159,7 +159,7 @@ export const update = async (req, res, next) => {
 
     await invalidateCache([
       `/api/advertisements/${id}`,
-      "/api/advertisements/",
+      "/api/advertisements",
     ]);
 
     return res.status(200).json({
@@ -194,7 +194,7 @@ export const destroy = async (req, res, next) => {
 
     await invalidateCache([
       `/api/advertisements/${id}`,
-      "/api/advertisements/",
+      "/api/advertisements",
     ]);
 
     return res.status(200).json({
