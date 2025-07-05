@@ -408,6 +408,74 @@ export const DoctorNames = async (req, res, next) => {
   }
 };
 
+export const DoctorsBySpecialization = async (req, res, next) => {
+  try {
+    const doctorsBySpecialization = await userModel.aggregate([
+      { $match: { role: "Doctor" } },
+      {
+        $project: {
+          name: 1,
+          phone: 1,
+          gender: 1,
+          city: 1,
+          country: 1,
+          ImgUrl: 1,
+          specialization: 1,
+          rate: 1,
+          Url: {
+            $concat: [
+              "http://localhost:5173/doctor/profile?name=",
+              {
+                $replaceAll: {
+                  input: "$name",
+                  find: " ",
+                  replacement: "-",
+                },
+              },
+            ],
+          },
+        },
+      },
+      {
+        $group: {
+          _id: "$specialization",
+          doctors: { $push: "$$ROOT" },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          specialization: "$_id",
+          doctors: 1,
+        },
+      },
+    ]);
+
+    if (!doctorsBySpecialization || doctorsBySpecialization.length === 0) {
+      return next(errorHandler(404, "No doctors found"));
+    }
+
+    // Convert array to object { specialization: [doctors] }
+    const groupedResult = {};
+    doctorsBySpecialization.forEach((item) => {
+      groupedResult[item.specialization] = item.doctors;
+    });
+
+    return res.status(200).json({
+      message: "Doctors grouped by specialization",
+      success: true,
+      data: groupedResult,
+    });
+  } catch (error) {
+    return next(
+      errorHandler(
+        500,
+        "Failed to fetch doctors grouped by specialization. " + error.message
+      )
+    );
+  }
+};
+
 export const HospitalNames = async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 1;
