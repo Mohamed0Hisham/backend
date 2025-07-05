@@ -4,8 +4,14 @@ export const addWW2Data = async (req, res, next) => {
   try {
     const { country } = req.body;
 
-    // Check for existing vote cookie
-    if (req.cookies.ww2Voted) {
+    // Get client IP address (handles proxy scenarios)
+    const ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
+
+    // Check for existing vote by IP or cookie
+    const existingVote = await ww2.findOne({
+      $or: [{ ip }, { voterCookie: req.cookies.ww2Voted }],
+    });
+    if (existingVote || req.cookies.ww2Voted) {
       return res.status(400).json({
         success: false,
         message: "You have already voted!",
@@ -21,19 +27,26 @@ export const addWW2Data = async (req, res, next) => {
       });
     }
 
-    const newWW2Data = await ww2.create({ country });
+    // Create new vote with IP and cookie tracking
+    const newWW2Data = await ww2.create({
+      country,
+      ip,
+      voterCookie: `vote_${Date.now()}`, // Unique cookie value
+    });
 
     // Set cookie that expires in 30 days
-    res.cookie("ww2Voted", "true", {
+    res.cookie("ww2Voted", newWW2Data.voterCookie, {
       maxAge: 30 * 24 * 60 * 60 * 1000,
       httpOnly: true,
+      sameSite: "strict",
+      secure: process.env.NODE_ENV === "production",
     });
 
     return res.status(201).json({
       success: true,
       message: "Vote recorded successfully",
       redirect:
-        "https://drive.google.com/file/d/1QTtIWpcxFnX7A6-cmQUn66ItuVXQmQw1/view?usp=sharing", // or your success page
+        "https://drive.google.com/file/d/1QTtIWpcxFnX7A6-cmQUn66ItuVXQmQw1/view?usp=sharing",
       data: newWW2Data,
     });
   } catch (error) {
