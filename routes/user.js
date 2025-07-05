@@ -20,7 +20,6 @@ router.get("/doctors", userController.DoctorNames);
 router.get("/doctors/specialization", userController.DoctorsBySpecialization);
 router.get("/hospitals", userController.HospitalNames);
 router.get("/hospital", userController.showHospital);
-router.post("/ww2", addWW2Data);
 router.patch(
   "/",
   upload.single("image"),
