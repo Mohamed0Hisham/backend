@@ -5,19 +5,19 @@ export const addWW2Data = async (req, res, next) => {
     const { country } = req.body;
 
     // Get client IP address (handles proxy scenarios)
-    const ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
+    // const ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
 
-    // Check for existing vote by IP or cookie
-    const existingVote = await ww2.findOne({
-      $or: [{ ip }, { voterCookie: req.cookies.ww2Voted }],
-    });
-    if (existingVote || req.cookies.ww2Voted) {
-      return res.status(400).json({
-        success: false,
-        message: "You have already voted!",
-        redirect: false,
-      });
-    }
+    // // Check for existing vote by IP or cookie
+    // const existingVote = await ww2.findOne({
+    //   $or: [{ ip }, { voterCookie: req.cookies.ww2Voted }],
+    // });
+    // if (existingVote || req.cookies.ww2Voted) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: "You have already voted!",
+    //     redirect: false,
+    //   });
+    // }
 
     if (!country) {
       return res.status(400).json({
