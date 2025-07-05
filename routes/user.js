@@ -16,6 +16,7 @@ router.get("/one", authenticateJWT, cache(600), userController.show);
 router.get("/one/:id", authenticateJWT, cache(600), userController.showOneUser);
 router.post("/refresh", userController.refresh);
 router.get("/doctors", userController.DoctorNames);
+router.get("/doctors/specialization", userController.DoctorsBySpecialization);
 router.get("/hospitals", userController.HospitalNames);
 router.get("/hospital", userController.showHospital);
 router.patch(
