@@ -624,7 +624,7 @@ export const deleteAccount = async (req, res, next) => {
         secure: true,
         sameSite: "None",
       });
-      await invalidateCache(["/api/users",`/api/users/${userId}`,`/api/users/one`]);
+      await invalidateCache(["/api/users", `/api/users/one`, `${userId}/api/users/one/*`]);
       
     return res.status(200).json({
       success: true,
@@ -683,7 +683,7 @@ export const changeUserRole = async (req, res, next) => {
     user.role = newRole;
     await user.save();
 
-    await invalidateCache(["/api/users",`/api/users/${adminId}`,`/api/users/one`]);
+    await invalidateCache(["/api/users", `/api/users/one`, `${adminId}/api/users/one/*`]);
 
     return res.status(200).json({
       success: true,
