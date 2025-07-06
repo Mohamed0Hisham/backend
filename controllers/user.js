@@ -331,7 +331,8 @@ export const update = async (req, res, next) => {
       { $set: result }, // Update only the fields provided in req.body
       { new: true } // Return the updated document
     );
-    await invalidateCache(["/api/users",`/api/users/${id}`,`/api/users/one`]);
+
+    await invalidateCache(["/api/users", `/api/users/one`, `${id}/api/users/one/*`]);
 
     return res.status(200).json({
       message: "User data has been updated",
