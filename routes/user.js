@@ -24,6 +24,7 @@ router.post("/refresh", userController.refresh);
 router.get("/doctors", cache(600), userController.DoctorNames);
 router.get("/hospitals", cache(600), userController.HospitalNames);
 router.get("/hospital", cache(600), userController.showHospital);
+router.get("/doctors/specialization", userController.DoctorsBySpecialization);
 router.patch(
 	"/",
 	upload.single("image"),

@@ -11,9 +11,15 @@ export const fetchPatient = async (req, res, next) => {
     if (!id) return next(errorHandler(400, "missing patient ID"));
 
     const user = req.user;
-    console.log(typeof user._id);
-    console.log(typeof id);
-    if (user._id !== id && user.role !== "Hospital" && user.role !== "Admin")
+    // console.log(typeof user._id);
+    // console.log(typeof id);
+    if (
+      user._id !== id &&
+      user.role !== "Hospital" &&
+      user.role !== "Admin" &&
+      user.role !== "Doctor" &&
+      user.role !== "Nurse"
+    )
       return next(errorHandler(401, "Unauthorized operation"));
 
     const patient = await User.findById(id, {
