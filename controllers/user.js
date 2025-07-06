@@ -332,7 +332,7 @@ export const update = async (req, res, next) => {
       { new: true } // Return the updated document
     );
 
-    await invalidateCache(["/api/users", `/api/users/one`, `${id}/api/users/one/*`]);
+    await invalidateCache(["/api/users", `/api/users/one`, `${id}/api/users/one/*`,'/api/users/doctors','/api/users/hospital*']);
 
     return res.status(200).json({
       message: "User data has been updated",
@@ -692,7 +692,7 @@ export const deleteAccount = async (req, res, next) => {
         secure: true,
         sameSite: "None",
       });
-      await invalidateCache(["/api/users", `/api/users/one`, `${userId}/api/users/one/*`]);
+      await invalidateCache(["/api/users", `/api/users/one`, `${userId}/api/users/one/*`, '/api/users/doctors','/api/users/hospital*']);
       
     return res.status(200).json({
       success: true,
@@ -751,7 +751,7 @@ export const changeUserRole = async (req, res, next) => {
     user.role = newRole;
     await user.save();
 
-    await invalidateCache(["/api/users", `/api/users/one`, `${adminId}/api/users/one/*`]);
+    await invalidateCache(["/api/users", `/api/users/one`, `${adminId}/api/users/one/*`, '/api/users/doctors', '/api/users/hospital*']);
 
     return res.status(200).json({
       success: true,
