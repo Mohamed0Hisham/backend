@@ -74,7 +74,7 @@ export const register = async (req, res, next) => {
     }
 
     await emailService.confirmEmail(email, token);
-        await invalidateCache(["/api/users"]);
+        await invalidateCache(["/api/users",`/api/users/*`]);
     return res
       .status(201)
       .json({ message: "confirmation email has been sent" });
