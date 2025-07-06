@@ -2,6 +2,7 @@ import { errorHandler } from "../helpers/errorHandler.js";
 import mongoose from "mongoose";
 import RATING from "../models/ratingModel.js";
 import USER from "../models/userModel.js";
+import { invalidateCache } from "../helpers/invalidateCache.js";
 
 export const store = async (req, res, next) => {
 	const userId = req.body.userId;
@@ -47,7 +48,9 @@ export const store = async (req, res, next) => {
 
 			// Calculate the average rate only if there are valid ratings
 			if (validRatingsCount > 0) {
-				const averageRate = Number((totalRate / validRatingsCount).toFixed(2));
+				const averageRate = Number(
+					(totalRate / validRatingsCount).toFixed(2)
+				);
 
 				// Update the user's average rate
 				await USER.findByIdAndUpdate(userId, { rate: averageRate });
@@ -56,6 +59,12 @@ export const store = async (req, res, next) => {
 				await USER.findByIdAndUpdate(userId, { rate: null });
 			}
 
+			await invalidateCache([
+				"/api/users",
+				`/api/users/doctors`,
+				`/api/users/hospitals`,
+				`/api/users/hospital*`,
+			]);
 			return res.status(201).json({
 				msg: "Rating has been successfully added",
 				success: true,

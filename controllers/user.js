@@ -13,7 +13,7 @@ import {
   verifyRefreshToken,
 } from "../controllers/token.js";
 import { format } from "date-fns";
-
+import { invalidateCache } from "../helpers/invalidateCache.js"
 dotenv.config();
 
 export const register = async (req, res, next) => {
@@ -74,6 +74,7 @@ export const register = async (req, res, next) => {
     }
 
     await emailService.confirmEmail(email, token);
+        await invalidateCache(["/api/users",`/api/users/*`]);
     return res
       .status(201)
       .json({ message: "confirmation email has been sent" });
@@ -330,6 +331,9 @@ export const update = async (req, res, next) => {
       { $set: result }, // Update only the fields provided in req.body
       { new: true } // Return the updated document
     );
+
+    await invalidateCache(["/api/users", `/api/users/one`, `${id}/api/users/one/*`,'/api/users/doctors','/api/users/hospital*']);
+
     return res.status(200).json({
       message: "User data has been updated",
       success: true,
@@ -688,7 +692,8 @@ export const deleteAccount = async (req, res, next) => {
         secure: true,
         sameSite: "None",
       });
-
+      await invalidateCache(["/api/users", `/api/users/one`, `${userId}/api/users/one/*`, '/api/users/doctors','/api/users/hospital*']);
+      
     return res.status(200).json({
       success: true,
       message: "Account deleted successfully",
@@ -745,6 +750,8 @@ export const changeUserRole = async (req, res, next) => {
     // Update the user's role
     user.role = newRole;
     await user.save();
+
+    await invalidateCache(["/api/users", `/api/users/one`, `${adminId}/api/users/one/*`, '/api/users/doctors', '/api/users/hospital*']);
 
     return res.status(200).json({
       success: true,
