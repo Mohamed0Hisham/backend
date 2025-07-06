@@ -74,6 +74,7 @@ export const register = async (req, res, next) => {
     }
 
     await emailService.confirmEmail(email, token);
+        await invalidateCache(["/api/users"]);
     return res
       .status(201)
       .json({ message: "confirmation email has been sent" });
@@ -330,6 +331,7 @@ export const update = async (req, res, next) => {
       { $set: result }, // Update only the fields provided in req.body
       { new: true } // Return the updated document
     );
+    await invalidateCache(["/api/users",`/api/users/${id}`]);
     return res.status(200).json({
       message: "User data has been updated",
       success: true,
@@ -621,6 +623,7 @@ export const deleteAccount = async (req, res, next) => {
         sameSite: "None",
       });
 
+      await invalidateCache(["/api/users",`/api/users/${userId}`]);
     return res.status(200).json({
       success: true,
       message: "Account deleted successfully",
@@ -677,6 +680,8 @@ export const changeUserRole = async (req, res, next) => {
     // Update the user's role
     user.role = newRole;
     await user.save();
+
+    await invalidateCache(["/api/users",`/api/users/${adminId}`]);
 
     return res.status(200).json({
       success: true,
