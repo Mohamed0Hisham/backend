@@ -13,7 +13,7 @@ import {
   verifyRefreshToken,
 } from "../controllers/token.js";
 import { format } from "date-fns";
-
+import { invalidateCache } from "../helpers/invalidateCache.js"
 dotenv.config();
 
 export const register = async (req, res, next) => {
@@ -331,7 +331,8 @@ export const update = async (req, res, next) => {
       { $set: result }, // Update only the fields provided in req.body
       { new: true } // Return the updated document
     );
-    await invalidateCache(["/api/users",`/api/users/${id}`]);
+    await invalidateCache(["/api/users",`/api/users/${id}`,`/api/users/one`]);
+
     return res.status(200).json({
       message: "User data has been updated",
       success: true,
@@ -622,8 +623,8 @@ export const deleteAccount = async (req, res, next) => {
         secure: true,
         sameSite: "None",
       });
-
-      await invalidateCache(["/api/users",`/api/users/${userId}`]);
+      await invalidateCache(["/api/users",`/api/users/${userId}`,`/api/users/one`]);
+      
     return res.status(200).json({
       success: true,
       message: "Account deleted successfully",
@@ -681,7 +682,7 @@ export const changeUserRole = async (req, res, next) => {
     user.role = newRole;
     await user.save();
 
-    await invalidateCache(["/api/users",`/api/users/${adminId}`]);
+    await invalidateCache(["/api/users",`/api/users/${adminId}`,`/api/users/one`]);
 
     return res.status(200).json({
       success: true,
