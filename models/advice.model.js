@@ -25,23 +25,14 @@ const adviceSchema = mongoose.Schema(
 			required: [true, "This Advice MUST have a description"],
 			maxLength: [400, "Description MUST NOT exceed 400 characters"],
 		},
-		ImgUrl: {
-			type: String,
-			// default:
-			// 	"https://res.cloudinary.com/dweffiohi/image/upload/v1745584464/ncwaujyakzftizl78kvp.jpg",
-		},
-		ImgPublicId: {
-			type: String,
-			// default: process.env.ADVICE_DEFAULT_IMAGE_PUBLICID,
-		},
 		likesCount: {
 			type: Number,
-			default: 0
-		  },
+			default: 0,
+		},
 		dislikesCount: {
 			type: Number,
-			default: 0
-		  },
+			default: 0,
+		},
 	},
 	{
 		timestamps: true,
