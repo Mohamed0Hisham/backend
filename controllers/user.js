@@ -74,7 +74,7 @@ export const register = async (req, res, next) => {
     }
 
     await emailService.confirmEmail(email, token);
-    await invalidateCache(["/api/users", `/api/users/*`]);
+    await invalidateCache(["/api/users" ,"/api/users/hospitals" , "/api/users/doctors", "/api/users/doctors/specialization"]);
     return res
       .status(201)
       .json({ message: "confirmation email has been sent" });
@@ -338,11 +338,8 @@ export const update = async (req, res, next) => {
     );
 
     await invalidateCache([
-      "/api/users",
-      `/api/users/one`,
-      `${id}/api/users/one/*`,
-      "/api/users/doctors",
-      "/api/users/hospital*",
+      "/api/users*",
+      `${id}/api/users/one*`,
     ]);
 
     return res.status(200).json({
@@ -704,11 +701,8 @@ export const deleteAccount = async (req, res, next) => {
         sameSite: "None",
       });
     await invalidateCache([
-      "/api/users",
-      `/api/users/one`,
-      `${userId}/api/users/one/*`,
-      "/api/users/doctors",
-      "/api/users/hospital*",
+      "/api/users*",
+      `${userId}/api/users/one*`,
     ]);
 
     return res.status(200).json({
@@ -769,11 +763,8 @@ export const changeUserRole = async (req, res, next) => {
     await user.save();
 
     await invalidateCache([
-      "/api/users",
-      `/api/users/one`,
+      "/api/users*",
       `${adminId}/api/users/one/*`,
-      "/api/users/doctors",
-      "/api/users/hospital*",
     ]);
 
     return res.status(200).json({
