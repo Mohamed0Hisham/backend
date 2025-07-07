@@ -72,8 +72,8 @@ export const store = async (req, res, next) => {
     !result.doctorId ||
     !result.diseasesCategoryId ||
     !result.description ||
-    !result.title ||
-    !req.file
+    !result.title
+    // !req.file
   ) {
     return next(errorHandler(400, "Please provide all required fields"));
   }
