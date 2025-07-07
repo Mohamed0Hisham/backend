@@ -3,7 +3,6 @@ import USER from "../models/userModel.js";
 import DiseasesCategory from "../models/diseasesCategory.model.js";
 import { errorHandler } from "../helpers/errorHandler.js";
 import mongoose from "mongoose";
-import { uploadImg, deleteImg } from "../helpers/images.js";
 import { invalidateCache } from "../helpers/invalidateCache.js";
 
 export const index = async (req, res, next) => {
@@ -73,7 +72,6 @@ export const store = async (req, res, next) => {
     !result.diseasesCategoryId ||
     !result.description ||
     !result.title
-    // !req.file
   ) {
     return next(errorHandler(400, "Please provide all required fields"));
   }
@@ -84,9 +82,6 @@ export const store = async (req, res, next) => {
     return next(errorHandler(422, "Description is too long"));
   }
   try {
-    const image = await uploadImg(req.file);
-    result.ImgUrl = image.ImgUrl;
-    result.ImgPublicId = image.ImgPublicId;
     const newAdvice = await new ADVICE(result);
     await newAdvice.save();
 
@@ -113,19 +108,6 @@ export const update = async (req, res, next) => {
   const result = { ...req.body };
   result.id = id;
   try {
-    if (req.file) {
-      try {
-        const advice = await ADVICE.findById(id);
-        const image = await uploadImg(req.file);
-        await deleteImg(advice.ImgPublicId);
-        result.ImgUrl = image.ImgUrl;
-        result.ImgPublicId = image.ImgPublicId;
-      } catch (error) {
-        return next(
-          errorHandler(500, "Error while Upload or delete picture" + error)
-        );
-      }
-    }
     const UpdatedAdvice = await ADVICE.findByIdAndUpdate(
       id,
       { $set: result }, // Update only the fields provided in req.body
@@ -156,7 +138,6 @@ export const destroy = async (req, res, next) => {
       return next(errorHandler(400, "Invalid Advertisment ID"));
     }
     const advice = await ADVICE.findById(id);
-    await deleteImg(advice.ImgPublicId);
     await ADVICE.deleteOne({ _id: id });
 
     await invalidateCache(["/api/advices/", `api/advices/${id}`]);
