@@ -13,6 +13,5 @@ const router = express.Router();
 router.get("/", cache(600), index);
 router.post("/", authenticateJWT, store);
 router.patch("/:id", authenticateJWT, update);
-
 router.delete("/:id", authenticateJWT, destroy);
 export default router;
