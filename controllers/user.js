@@ -13,7 +13,7 @@ import {
   verifyRefreshToken,
 } from "../controllers/token.js";
 import { format } from "date-fns";
-import { invalidateCache } from "../helpers/invalidateCache.js"
+import { invalidateCache } from "../helpers/invalidateCache.js";
 dotenv.config();
 
 export const register = async (req, res, next) => {
@@ -74,7 +74,7 @@ export const register = async (req, res, next) => {
     }
 
     await emailService.confirmEmail(email, token);
-        await invalidateCache(["/api/users",`/api/users/*`]);
+    await invalidateCache(["/api/users", `/api/users/*`]);
     return res
       .status(201)
       .json({ message: "confirmation email has been sent" });
@@ -122,7 +122,7 @@ export const login = async (req, res) => {
       httpOnly: true,
       secure: true,
       sameSite: "None",
-      maxAge: 60 * 60 * 1000,
+      maxAge: 3 * 60 * 60 * 1000,
     });
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
@@ -191,8 +191,13 @@ export const refresh = async (req, res) => {
       return res.status(403).json({ message: "Invalid refresh token" });
     }
     const accessToken = generateAccessToken(user);
-
-    return res.status(201).json({ accessToken });
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "None",
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+    });
+    return res.status(201).json({ refreshToken, accessToken });
   } catch (error) {
     console.error(error);
     return res
@@ -332,7 +337,13 @@ export const update = async (req, res, next) => {
       { new: true } // Return the updated document
     );
 
-    await invalidateCache(["/api/users", `/api/users/one`, `${id}/api/users/one/*`,'/api/users/doctors','/api/users/hospital*']);
+    await invalidateCache([
+      "/api/users",
+      `/api/users/one`,
+      `${id}/api/users/one/*`,
+      "/api/users/doctors",
+      "/api/users/hospital*",
+    ]);
 
     return res.status(200).json({
       message: "User data has been updated",
@@ -692,8 +703,14 @@ export const deleteAccount = async (req, res, next) => {
         secure: true,
         sameSite: "None",
       });
-      await invalidateCache(["/api/users", `/api/users/one`, `${userId}/api/users/one/*`, '/api/users/doctors','/api/users/hospital*']);
-      
+    await invalidateCache([
+      "/api/users",
+      `/api/users/one`,
+      `${userId}/api/users/one/*`,
+      "/api/users/doctors",
+      "/api/users/hospital*",
+    ]);
+
     return res.status(200).json({
       success: true,
       message: "Account deleted successfully",
@@ -751,7 +768,13 @@ export const changeUserRole = async (req, res, next) => {
     user.role = newRole;
     await user.save();
 
-    await invalidateCache(["/api/users", `/api/users/one`, `${adminId}/api/users/one/*`, '/api/users/doctors', '/api/users/hospital*']);
+    await invalidateCache([
+      "/api/users",
+      `/api/users/one`,
+      `${adminId}/api/users/one/*`,
+      "/api/users/doctors",
+      "/api/users/hospital*",
+    ]);
 
     return res.status(200).json({
       success: true,
