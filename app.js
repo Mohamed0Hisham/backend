@@ -139,6 +139,7 @@ import pdfRouter from "./routes/pdf.routes.js";
 import patientRouter from "./routes/patient.routes.js";
 import diagnosisRouter from "./routes/diagnosis.routes.js";
 import interactionRouter from "./routes/interacrion.route.js";
+import aiRouter from "./routes/ai.routes.js";
 
 dotenv.config();
 
@@ -233,6 +234,7 @@ app.use("/api/conversation", conversationRouter);
 app.use("/api/file", pdfRouter);
 app.use("/api/patient", patientRouter);
 app.use("/api/diagnosis", diagnosisRouter);
+app.use("/api/ai", aiRouter);
 app.use("/api", interactionRouter);
 
 app.get("*", (req, res) => {

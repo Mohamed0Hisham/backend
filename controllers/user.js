@@ -13,7 +13,7 @@ import {
   verifyRefreshToken,
 } from "../controllers/token.js";
 import { format } from "date-fns";
-
+import { invalidateCache } from "../helpers/invalidateCache.js";
 dotenv.config();
 
 export const register = async (req, res, next) => {
@@ -56,11 +56,17 @@ export const register = async (req, res, next) => {
     }
 
     const newUser = new userModel(req.body);
+    if (req.file) {
+      const image = await uploadImg(req.file);
+      newUser.ImgPublicId = image.ImgPublicId;
+      newUser.ImgUrl = image.ImgUrl;
+    }
     const hashedPassword = await bcrypt.hash(req.body.password, 10);
     newUser.password = hashedPassword;
 
-    const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, {
-      expiresIn: "15h",
+    const token = jwt.sign({ email: email }, process.env.JWT_SECRET, {
+      expiresIn: "24h",
+
     });
 
     const user = await newUser.save();
@@ -69,6 +75,7 @@ export const register = async (req, res, next) => {
     }
 
     await emailService.confirmEmail(email, token);
+    await invalidateCache(["/api/users" ,"/api/users/hospitals" , "/api/users/doctors", "/api/users/doctors/specialization"]);
     return res
       .status(201)
       .json({ message: "confirmation email has been sent" });
@@ -100,14 +107,12 @@ export const login = async (req, res) => {
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 
-
     if (user.refreshTokens.length >= 3) {
-      user.refreshTokens.shift(); 
+      user.refreshTokens.shift();
     }
 
-		user.refreshTokens.push(refreshToken);
-		await user.save();
-
+    user.refreshTokens.push(refreshToken);
+    await user.save();
 
     /**if (!accessToken)
 			return res
@@ -118,13 +123,15 @@ export const login = async (req, res) => {
       httpOnly: true,
       secure: true,
       sameSite: "None",
-      maxAge: 15*60 * 60 * 1000,
+
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+
     });
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: true,
       sameSite: "None",
-      maxAge: 30 * 24 * 60 * 60 * 1000,
+      maxAge: 15 * 60 * 60 * 1000,
     });
 
     return res.status(200).json({
@@ -142,37 +149,37 @@ export const login = async (req, res) => {
   }
 };
 export const logout = async (req, res) => {
-	try {
-		const userId = req.user._id;
-		const refreshToken = req?.cookies?.refreshToken;
-		const accessToken = req?.cookies?.accessToken;
+  try {
+    const userId = req.user._id;
+    const refreshToken = req?.cookies?.refreshToken;
+    const accessToken = req?.cookies?.accessToken;
 
-		const user = await userModel.findOne({ _id: userId });
-		if (!user) return errorHandler(404, "user doesn't exist in database");
+    const user = await userModel.findOne({ _id: userId });
+    if (!user) return errorHandler(404, "user doesn't exist in database");
 
-		user.refreshTokens = [];
-		await user.save();
+    user.refreshTokens = [];
+    await user.save();
 
-		// Clear cookies
-		if (refreshToken)
-			res.clearCookie("refreshToken", {
-				httpOnly: true,
-				secure: true,
-				sameSite: "None",
-			});
-		if (accessToken)
-			res.clearCookie("accessToken", {
-				httpOnly: true,
-				secure: true,
-				sameSite: "None",
-			});
-		return res.status(200).json({ message: "Logged out successfully" });
-	} catch (error) {
-		console.error(error);
-		return res
-			.status(500)
-			.json({ message: "Server error during logout", error });
-	}
+    // Clear cookies
+    if (refreshToken)
+      res.clearCookie("refreshToken", {
+        httpOnly: true,
+        secure: true,
+        sameSite: "None",
+      });
+    if (accessToken)
+      res.clearCookie("accessToken", {
+        httpOnly: true,
+        secure: true,
+        sameSite: "None",
+      });
+    return res.status(200).json({ message: "Logged out successfully" });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ message: "Server error during logout", error });
+  }
 };
 export const refresh = async (req, res) => {
   try {
@@ -186,6 +193,7 @@ export const refresh = async (req, res) => {
     if (!user || !user.refreshTokens.includes(refreshToken)) {
       return res.status(403).json({ message: "Invalid refresh token" });
     }
+
     const newAccessToken = generateAccessToken(user);
 
     res.cookie("accessToken",newAccessToken ,{
@@ -194,7 +202,8 @@ export const refresh = async (req, res) => {
      sameSite:"None",
      maxAge: 15*60*60*1000
     })
-    return res.status(201).json({ newAccessToken });
+    return res.status(201).json({refreshToken, newAccessToken });
+
   } catch (error) {
     console.error(error);
     return res
@@ -334,6 +343,12 @@ export const update = async (req, res, next) => {
       { $set: result }, // Update only the fields provided in req.body
       { new: true } // Return the updated document
     );
+
+    await invalidateCache([
+      "/api/users*",
+      `${id}/api/users/one*`,
+    ]);
+
     return res.status(200).json({
       message: "User data has been updated",
       success: true,
@@ -407,6 +422,74 @@ export const DoctorNames = async (req, res, next) => {
         500,
         "An error occurred while retrieving the doctors. Please try again later. " +
           error
+      )
+    );
+  }
+};
+
+export const DoctorsBySpecialization = async (req, res, next) => {
+  try {
+    const doctorsBySpecialization = await userModel.aggregate([
+      { $match: { role: "Doctor" } },
+      {
+        $project: {
+          name: 1,
+          phone: 1,
+          gender: 1,
+          city: 1,
+          country: 1,
+          ImgUrl: 1,
+          specialization: 1,
+          rate: 1,
+          Url: {
+            $concat: [
+              "http://localhost:5173/doctor/profile?name=",
+              {
+                $replaceAll: {
+                  input: "$name",
+                  find: " ",
+                  replacement: "-",
+                },
+              },
+            ],
+          },
+        },
+      },
+      {
+        $group: {
+          _id: "$specialization",
+          doctors: { $push: "$$ROOT" },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          specialization: "$_id",
+          doctors: 1,
+        },
+      },
+    ]);
+
+    if (!doctorsBySpecialization || doctorsBySpecialization.length === 0) {
+      return next(errorHandler(404, "No doctors found"));
+    }
+
+    // Convert array to object { specialization: [doctors] }
+    const groupedResult = {};
+    doctorsBySpecialization.forEach((item) => {
+      groupedResult[item.specialization] = item.doctors;
+    });
+
+    return res.status(200).json({
+      message: "Doctors grouped by specialization",
+      success: true,
+      data: groupedResult,
+    });
+  } catch (error) {
+    return next(
+      errorHandler(
+        500,
+        "Failed to fetch doctors grouped by specialization. " + error.message
       )
     );
   }
@@ -583,14 +666,14 @@ export const showHospital = async (req, res, next) => {
 // 	}
 // };
 export const deleteAccount = async (req, res, next) => {
-	try {
-		const userId = req.user._id;
-		const refreshToken = req?.cookies?.refreshToken;
-		const accessToken = req?.cookies?.accessToken;
+  try {
+    const userId = req.user._id;
+    const refreshToken = req?.cookies?.refreshToken;
+    const accessToken = req?.cookies?.accessToken;
 
-		if (!userId) {
-			return next(errorHandler(401, "Unauthenticated: please, login"));
-		}
+    if (!userId) {
+      return next(errorHandler(401, "Unauthenticated: please, login"));
+    }
 
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return next(errorHandler(400, "Invalid User ID"));
@@ -609,31 +692,33 @@ export const deleteAccount = async (req, res, next) => {
       await deleteImg(user.ImgPublicId);
     }
 
-		await userModel.deleteOne({ _id: userId });
+    await userModel.deleteOne({ _id: userId });
 
-		// Clear cookies
-		if (refreshToken)
-			res.clearCookie("refreshToken", {
-				httpOnly: true,
-				secure: true,
-				sameSite: "None",
-			});
-		if (accessToken)
-			res.clearCookie("accessToken", {
-				httpOnly: true,
-				secure: true,
-				sameSite: "None",
-			});
+    // Clear cookies
+    if (refreshToken)
+      res.clearCookie("refreshToken", {
+        httpOnly: true,
+        secure: true,
+        sameSite: "None",
+      });
+    if (accessToken)
+      res.clearCookie("accessToken", {
+        httpOnly: true,
+        secure: true,
+        sameSite: "None",
+      });
+    await invalidateCache([
+      "/api/users*",
+      `${userId}/api/users/one*`,
+    ]);
 
-		return res.status(200).json({
-			success: true,
-			message: "Account deleted successfully",
-		});
-	} catch (error) {
-		return next(
-			errorHandler(500, "Error deleting account: " + error.message)
-		);
-	}
+    return res.status(200).json({
+      success: true,
+      message: "Account deleted successfully",
+    });
+  } catch (error) {
+    return next(errorHandler(500, "Error deleting account: " + error.message));
+  }
 };
 
 export const changeUserRole = async (req, res, next) => {
@@ -683,6 +768,11 @@ export const changeUserRole = async (req, res, next) => {
     // Update the user's role
     user.role = newRole;
     await user.save();
+
+    await invalidateCache([
+      "/api/users*",
+      `${adminId}/api/users/one/*`,
+    ]);
 
     return res.status(200).json({
       success: true,

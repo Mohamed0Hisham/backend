@@ -372,6 +372,7 @@ export const index = async (req, res, next) => {
   if (role === "Admin") {
     try {
       const appointments = await Appointment.find();
+      const totalAppointments = await Appointment.countDocuments();
 
       if (appointments.length === 0) {
         return next(errorHandler(404, "There are no appointments"));
@@ -379,6 +380,7 @@ export const index = async (req, res, next) => {
       return res.status(200).json({
         message: "Appointments retrieved successfully",
         data: appointments,
+        totalAppointments: totalAppointments,
       });
     } catch (error) {
       return next(
@@ -420,10 +422,11 @@ export const index = async (req, res, next) => {
       if (appointments.length === 0) {
         return res.status(404).json({ message: "No appointments found" });
       }
-
+      const totalAppointments = await Appointment.countDocuments();
       res.json({
         message: "Appointments retrieved successfully",
         data: appointments,
+        totalAppointments: totalAppointments,
       });
     } catch (error) {
       console.error("Error fetching appointments:", error);
@@ -438,22 +441,18 @@ export const index = async (req, res, next) => {
 };
 
 export const show = async (req, res, next) => {
-  const id = req.params.id;
-  const patientId = req.user._id;
-  const booking = await Appointment.findById(id);
   try {
-    if (!patientId) {
-      session.abortTransaction();
-      return res
-        .status(404)
-        .json({ success: false, message: "patientId is required" });
-    }
-    if (booking.patientId.toString() !== patientId) {
+    const id = req.params.id;
+    const user = req.user;
+    
+    const booking = await Appointment.findById(id);
+    if(!booking) return next(errorHandler(404,"this booking Id doesn't exist"))
+    
+    if(user.role !=="Admin" && user.role !== "Hospital" && user._id !== booking.patientId ) 
       return res.status(403).json({
         success: false,
-        message: "It's not your appointment.",
+        message: "un-authorized operation",
       });
-    }
 
     res.status(200).json({
       message: "Appointment data has been retirved successfully",
@@ -464,6 +463,7 @@ export const show = async (req, res, next) => {
     res.status(400).json({
       success: false,
       message: "failed to show this appointment",
+      error:error.message
     });
   }
 };
