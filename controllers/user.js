@@ -60,7 +60,7 @@ export const register = async (req, res, next) => {
     newUser.password = hashedPassword;
 
     const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, {
-      expiresIn: "24h",
+      expiresIn: "15h",
     });
 
     const user = await newUser.save();
@@ -118,7 +118,7 @@ export const login = async (req, res) => {
       httpOnly: true,
       secure: true,
       sameSite: "None",
-      maxAge: 60 * 60 * 1000,
+      maxAge: 15*60 * 60 * 1000,
     });
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
@@ -186,9 +186,15 @@ export const refresh = async (req, res) => {
     if (!user || !user.refreshTokens.includes(refreshToken)) {
       return res.status(403).json({ message: "Invalid refresh token" });
     }
-    const accessToken = generateAccessToken(user);
+    const newAccessToken = generateAccessToken(user);
 
-    return res.status(201).json({ accessToken });
+    res.cookie("accessToken",newAccessToken ,{
+     httpOnly:true,
+     secure:true,
+     sameSite:"None",
+     maxAge: 15*60*60*1000
+    })
+    return res.status(201).json({ newAccessToken });
   } catch (error) {
     console.error(error);
     return res
@@ -196,6 +202,7 @@ export const refresh = async (req, res) => {
       .json({ message: "Server error during refreshing", error });
   }
 };
+
 export const index = async (req, res, next) => {
   try {
     // Check if the user is an Admin
