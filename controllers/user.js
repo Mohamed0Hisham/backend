@@ -66,6 +66,7 @@ export const register = async (req, res, next) => {
 
     const token = jwt.sign({ email: email }, process.env.JWT_SECRET, {
       expiresIn: "24h",
+
     });
 
     const user = await newUser.save();
@@ -122,13 +123,15 @@ export const login = async (req, res) => {
       httpOnly: true,
       secure: true,
       sameSite: "None",
+
       maxAge: 30 * 24 * 60 * 60 * 1000,
+
     });
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: true,
       sameSite: "None",
-      maxAge: 3 * 60 * 60 * 1000,
+      maxAge: 15 * 60 * 60 * 1000,
     });
 
     return res.status(200).json({
@@ -190,6 +193,7 @@ export const refresh = async (req, res) => {
     if (!user || !user.refreshTokens.includes(refreshToken)) {
       return res.status(403).json({ message: "Invalid refresh token" });
     }
+<<<<<<< HEAD
     const accessToken = generateAccessToken(user);
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
@@ -198,6 +202,19 @@ export const refresh = async (req, res) => {
       maxAge: 3 * 60 * 60 * 1000,
     });
     return res.status(201).json({ refreshToken, accessToken });
+=======
+
+    const newAccessToken = generateAccessToken(user);
+
+    res.cookie("accessToken",newAccessToken ,{
+     httpOnly:true,
+     secure:true,
+     sameSite:"None",
+     maxAge: 15*60*60*1000
+    })
+    return res.status(201).json({refreshToken, newAccessToken });
+
+>>>>>>> ea2f857011da460e710257cf8e53e458ee78cfd8
   } catch (error) {
     console.error(error);
     return res
@@ -205,6 +222,7 @@ export const refresh = async (req, res) => {
       .json({ message: "Server error during refreshing", error });
   }
 };
+
 export const index = async (req, res, next) => {
   try {
     // Check if the user is an Admin
