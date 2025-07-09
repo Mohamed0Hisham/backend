@@ -193,16 +193,6 @@ export const refresh = async (req, res) => {
     if (!user || !user.refreshTokens.includes(refreshToken)) {
       return res.status(403).json({ message: "Invalid refresh token" });
     }
-<<<<<<< HEAD
-    const accessToken = generateAccessToken(user);
-    res.cookie("accessToken", accessToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "None",
-      maxAge: 3 * 60 * 60 * 1000,
-    });
-    return res.status(201).json({ refreshToken, accessToken });
-=======
 
     const newAccessToken = generateAccessToken(user);
 
@@ -214,7 +204,6 @@ export const refresh = async (req, res) => {
     })
     return res.status(201).json({refreshToken, newAccessToken });
 
->>>>>>> ea2f857011da460e710257cf8e53e458ee78cfd8
   } catch (error) {
     console.error(error);
     return res
