@@ -122,13 +122,13 @@ export const login = async (req, res) => {
       httpOnly: true,
       secure: true,
       sameSite: "None",
-      maxAge: 3 * 60 * 60 * 1000,
+      maxAge: 30 * 24 * 60 * 60 * 1000,
     });
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: true,
       sameSite: "None",
-      maxAge: 30 * 24 * 60 * 60 * 1000,
+      maxAge: 3 * 60 * 60 * 1000,
     });
 
     return res.status(200).json({
@@ -195,7 +195,7 @@ export const refresh = async (req, res) => {
       httpOnly: true,
       secure: true,
       sameSite: "None",
-      maxAge: 30 * 24 * 60 * 60 * 1000,
+      maxAge: 3 * 60 * 60 * 1000,
     });
     return res.status(201).json({ refreshToken, accessToken });
   } catch (error) {
