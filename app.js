@@ -83,6 +83,7 @@ app.get("*", (req, res) => {
 });
 
 //Error handler route
+
 app.use((err, req, res, next) => {
 	if (res.headersSent) {
 		return;
@@ -178,11 +179,13 @@ io.on("connection", (socket) => {
 
   socket.on("addUser", (userId) => {
     addUser(userId, socket.id);
+    console.log("🧠 All connected users:", users);
     io.emit("getUsers", users);
   });
 
   socket.on("sendMessage", ({ senderId, receiverId, text }) => {
     const user = getUser(receiverId);
+    console.log(receiverId)
     if (user) {
       io.to(user.socketId).emit("getMessage", { senderId, text });
       console.log(`📨 Message sent from ${senderId} to ${receiverId}: ${text}`);
@@ -201,9 +204,9 @@ io.on("connection", (socket) => {
 // ✅ Middlewares
 app.use(
   cors({
-    origin: (origin, callback) => {
+  /**   origin: (origin, callback) => {
       callback(null, origin || "*");
-    },
+    },*/origin: "http://localhost:5173",
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
@@ -258,3 +261,5 @@ mongoose
   .catch((err) => {
     console.log("❌ DB connection failed:", err.message);
   });
+
+  
