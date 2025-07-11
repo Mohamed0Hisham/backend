@@ -11,8 +11,8 @@ import cache from "../middlewares/cache.js";
 
 const router = express.Router();
 
-router.get("/", authenticateJWT, cache(600), index);
-router.get("/:id", authenticateJWT, cache(600), show);
+router.get("/",  cache(600), index);
+router.get("/:id", cache(600), show);
 router.post("/", authenticateJWT, store);
 router.patch("/:id", authenticateJWT, update);
 router.delete("/:id", authenticateJWT, destroy);
