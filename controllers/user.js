@@ -154,7 +154,7 @@ export const login = async (req, res) => {
 
 		return res.status(200).json({
 			userId: user._id,
-      Role: user.role,
+			Role: user.role,
 			accessToken,
 			refreshToken,
 		});
