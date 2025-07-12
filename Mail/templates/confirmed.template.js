@@ -5,7 +5,7 @@ export const confirmed = () =>
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <meta http-equiv="refresh" content="5;url=http://localhost:5173/login">
+            <meta http-equiv="refresh" content="5;url=http://front-end-mauve-ten.vercel.app/register/login">
             <title>Email Confirmed Successfully</title>
             <style>
                 body {
@@ -52,7 +52,7 @@ export const confirmed = () =>
                 <h1>Email Confirmed Successfully!</h1>
                 <p>Thank you for confirming your email address. Your account is now active.</p>
                 <p class="redirect-message">You will be redirected to the login page in 5 seconds...</p>
-                <p>If you are not redirected, <a href="http://localhost:5173/login">click here</a>.</p>
+                <p>If you are not redirected, <a href="http://front-end-mauve-ten.vercel.app/register/login">click here</a>.</p>
             </div>
         </body>
         </html>
