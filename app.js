@@ -144,18 +144,21 @@ import aiRouter from "./routes/ai.routes.js";
 dotenv.config();
 
 const app = express();
-const server = http.createServer(app); // ✅ Shared HTTP server for Express and Socket.IO
+const server = http.createServer(app); 
 
-// ✅ Setup Socket.IO on same server
+
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173", // or your frontend URL
+    origin: (origin, callback) => {
+      callback(null, origin || "*");
+    },
     methods: ["GET", "POST"],
     credentials: true,
   },
 });
 
-// 🧠 In-memory user storage
+
+
 let users = [];
 
 const addUser = (userId, socketId) => {
@@ -204,9 +207,9 @@ io.on("connection", (socket) => {
 // ✅ Middlewares
 app.use(
   cors({
-  /**   origin: (origin, callback) => {
+     origin: (origin, callback) => {
       callback(null, origin || "*");
-    },*/origin: "http://localhost:5173",
+    },
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
