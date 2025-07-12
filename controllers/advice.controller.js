@@ -71,23 +71,29 @@ export const index = async (req, res, next) => {
 };
 
 export const store = async (req, res, next) => {
-	const result = { ...req.body };
-	result.doctorId = req.user._id;
-	if (
-		!result.doctorId ||
-		!result.diseasesCategoryId ||
-		!result.description ||
-		!result.title
-	) {
-		return next(errorHandler(400, "Please provide all required fields"));
-	}
-	if (result.description.length > 400) {
-		return next(errorHandler(422, "Description is too long"));
-	}
-	if (result.title.length > 400) {
-		return next(errorHandler(422, "Description is too long"));
-	}
 	try {
+		if (req.user.role !== "Admin" && req.user.role !== "Doctor")
+			return next(errorHandler(403, "un-authorized operation"));
+
+		const result = { ...req.body };
+		result.doctorId = req.user._id;
+
+		if (
+			!result.doctorId ||
+			!result.diseasesCategoryId ||
+			!result.description ||
+			!result.title
+		) {
+			return next(
+				errorHandler(400, "Please provide all required fields")
+			);
+		}
+		if (result.description.length > 400) {
+			return next(errorHandler(422, "Description is too long"));
+		}
+		if (result.title.length > 400) {
+			return next(errorHandler(422, "Description is too long"));
+		}
 		const newAdvice = await new ADVICE(result);
 		await newAdvice.save();
 
@@ -106,23 +112,29 @@ export const store = async (req, res, next) => {
 };
 
 export const update = async (req, res, next) => {
-	const id = req.params.id;
-	if (!id) {
-		return next(errorHandler(400, "please provide the ID of the advice"));
-	}
-	if (!mongoose.Types.ObjectId.isValid(id)) {
-		return next(errorHandler(400, "Invalid advice ID"));
-	}
-
-	const advice = await ADVICE.findById(id);
-	if (!advice) return next(errorHandler(404, "this advice doesn't exist"));
-
-	const result = { ...req.body };
 	try {
+		if (req.user.role !== "Admin" && req.user.role !== "Doctor")
+			return next(errorHandler(403, "un-authorized operation"));
+
+		const id = req.params.id;
+		if (!id) {
+			return next(
+				errorHandler(400, "please provide the ID of the advice")
+			);
+		}
+		if (!mongoose.Types.ObjectId.isValid(id)) {
+			return next(errorHandler(400, "Invalid advice ID"));
+		}
+
+		const advice = await ADVICE.findById(id);
+		if (!advice)
+			return next(errorHandler(404, "this advice doesn't exist"));
+
+		const result = { ...req.body };
 		const UpdatedAdvice = await ADVICE.findByIdAndUpdate(
 			id,
 			{ $set: result },
-			{ new: true } 
+			{ new: true }
 		).lean();
 
 		await invalidateCache(["/api/advices/", `api/advices/${id}`]);
@@ -143,8 +155,11 @@ export const update = async (req, res, next) => {
 };
 
 export const destroy = async (req, res, next) => {
-	const id = req.params.id;
 	try {
+		if (req.user.role !== "Admin" && req.user.role !== "Doctor")
+			return next(errorHandler(403, "un-authorized operation"));
+
+		const id = req.params.id;
 		if (!id) {
 			return next(
 				errorHandler(400, "Please provide the ID of the advice")
