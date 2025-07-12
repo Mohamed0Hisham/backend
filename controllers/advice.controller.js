@@ -71,23 +71,30 @@ export const index = async (req, res, next) => {
 };
 
 export const store = async (req, res, next) => {
-	const result = { ...req.body };
-	result.doctorId = req.user._id;
-	if (
-		!result.doctorId ||
-		!result.diseasesCategoryId ||
-		!result.description ||
-		!result.title
-	) {
-		return next(errorHandler(400, "Please provide all required fields"));
-	}
-	if (result.description.length > 400) {
-		return next(errorHandler(422, "Description is too long"));
-	}
-	if (result.title.length > 400) {
-		return next(errorHandler(422, "Description is too long"));
-	}
 	try {
+		if (req.user.role !== "Admin" && req.user.role !== "Doctor")
+			return next(errorHandler(403, "un-authorized operation"));
+		
+		
+		const result = { ...req.body };
+		result.doctorId = req.user._id;
+		
+		if (
+			!result.doctorId ||
+			!result.diseasesCategoryId ||
+			!result.description ||
+			!result.title
+		) {
+			return next(
+				errorHandler(400, "Please provide all required fields")
+			);
+		}
+		if (result.description.length > 400) {
+			return next(errorHandler(422, "Description is too long"));
+		}
+		if (result.title.length > 400) {
+			return next(errorHandler(422, "Description is too long"));
+		}
 		const newAdvice = await new ADVICE(result);
 		await newAdvice.save();
 
@@ -122,7 +129,7 @@ export const update = async (req, res, next) => {
 		const UpdatedAdvice = await ADVICE.findByIdAndUpdate(
 			id,
 			{ $set: result },
-			{ new: true } 
+			{ new: true }
 		).lean();
 
 		await invalidateCache(["/api/advices/", `api/advices/${id}`]);
