@@ -85,10 +85,7 @@ export const register = async (req, res, next) => {
 
 		await emailService.confirmEmail(email, token);
 		await invalidateCache([
-			"/api/users",
-			"/api/users/hospitals",
-			"/api/users/doctors",
-			"/api/users/doctors/specialization",
+			"/api/user*",
 		]);
 		return res
 			.status(201)
